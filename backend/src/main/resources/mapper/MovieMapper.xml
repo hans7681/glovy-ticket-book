@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.backend.backend.mapper.MovieMapper">
+
+    <!-- 自定义 ResultMap 来处理 Movie 和 MovieType 的一对多关系 (保持不变) -->
+    <resultMap id="MovieWithTypesResultMap" type="com.backend.backend.entity.Movie">
+        <!-- Movie 的基本属性映射 -->
+        <id property="id" column="m_id"/>
+        <result property="title" column="m_title"/>
+        <result property="director" column="m_director"/>
+        <result property="actors" column="m_actors"/>
+        <result property="duration" column="m_duration"/>
+        <result property="description" column="m_description"/>
+        <result property="posterUrl" column="m_poster_url"/>
+        <result property="releaseDate" column="m_release_date"/>
+        <result property="country" column="m_country"/>
+        <result property="status" column="m_status"/>
+        <result property="trailerUrl" column="m_trailer_url"/>
+        <result property="tmdbId" column="m_tmdb_id"/>
+        <result property="tmdbVoteAverage" column="m_tmdb_vote_average"/>
+        <result property="tmdbVoteCount" column="m_tmdb_vote_count"/>
+        <result property="tmdbPopularity" column="m_tmdb_popularity"/>
+        <result property="totalBoxOffice" column="m_total_box_office"/>
+        <result property="averageRating" column="m_average_rating"/>
+        <result property="createTime" column="m_create_time"/>
+        <result property="updateTime" column="m_update_time"/>
+        <!-- 关联的 MovieType 列表 -->
+        <collection property="movieTypes" ofType="com.backend.backend.entity.MovieType">
+            <id property="id" column="mt_id"/>
+            <result property="name" column="mt_name"/>
+            <result property="tmdbGenreId" column="mt_tmdb_genre_id"/>
+        </collection>
+    </resultMap>
+
+    <!-- 查询单个电影及其类型 (保持不变) -->
+    <select id="findMovieWithTypesById" resultMap="MovieWithTypesResultMap">
+        SELECT
+            m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id
+        FROM
+            movie m
+        LEFT JOIN
+            movie_movie_type mmt ON m.id = mmt.movie_id
+        LEFT JOIN
+            movie_type mt ON mmt.movie_type_id = mt.id
+        WHERE
+            m.id = #{movieId}
+    </select>
+
+    <!-- (旧的，不再直接使用) 分页查询电影列表及其类型 -->
+    <!--
+    <select id="findMoviesWithTypesPage" resultMap="MovieWithTypesResultMap">
+        SELECT
+            m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id
+        FROM
+            movie m
+        LEFT JOIN
+            movie_movie_type mmt ON m.id = mmt.movie_id
+        LEFT JOIN
+            movie_type mt ON mmt.movie_type_id = mt.id
+        <where>
+            <if test="title != null and title != ''">
+                AND m.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND m.status = #{status}
+            </if>
+            <if test="movieTypeId != null">
+                AND m.id IN (SELECT movie_id FROM movie_movie_type WHERE movie_type_id = #{movieTypeId})
+            </if>
+        </where>
+        ORDER BY m.release_date DESC, m.id DESC
+    </select>
+    -->
+
+    <!-- 新增：步骤一 - 分页查询符合条件的电影 ID -->
+    <select id="selectMovieIdsPage" resultType="java.lang.Long">
+        SELECT
+            m.id
+        FROM
+            movie m
+        <if test="movieTypeId != null">
+            JOIN movie_movie_type mmt ON m.id = mmt.movie_id AND mmt.movie_type_id = #{movieTypeId}
+        </if>
+        <where>
+            <if test="title != null and title != ''">
+                AND m.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND m.status = #{status}
+            </if>
+        </where>
+        <!-- 修改排序顺序：先按状态排序(NOW_PLAYING优先)，然后按上映日期倒序 -->
+        ORDER BY 
+            CASE 
+                WHEN m.status = 'NOW_PLAYING' THEN 0 
+                WHEN m.status = 'COMING_SOON' THEN 1 
+                ELSE 2 
+            END,
+            m.release_date DESC, 
+            m.id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 新增：根据 ID 列表查询电影完整信息（包括类型）-->
+    <select id="selectMoviesWithTypesByIds" resultMap="MovieWithTypesResultMap">
+        SELECT
+            m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id
+        FROM
+            movie m
+        LEFT JOIN
+            movie_movie_type mmt ON m.id = mmt.movie_id
+        LEFT JOIN
+            movie_type mt ON mmt.movie_type_id = mt.id
+        WHERE
+            m.id IN
+            <foreach item="id" collection="ids" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        <!-- 保持与 ID 查询一致的排序，确保结果顺序 -->
+        ORDER BY FIELD(m.id,
+          <foreach item="id" collection="ids" separator=",">
+              #{id}
+          </foreach>
+        )
+    </select>
+
+    <!-- 新增：查询符合条件的总电影数量 -->
+    <select id="countMoviesByCriteria" resultType="java.lang.Long">
+        SELECT count(DISTINCT m.id)
+        FROM movie m
+        <if test="movieTypeId != null">
+            JOIN movie_movie_type mmt ON m.id = mmt.movie_id AND mmt.movie_type_id = #{movieTypeId}
+        </if>
+         <where>
+            <if test="title != null and title != ''">
+                AND m.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND m.status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 新增：分页查询电影，包含所有筛选条件 -->
+    <!-- 使用 resultMap 处理一对多关联 -->
+    <!-- 
+    <select id="selectMoviesPageWithFilters" resultMap="MovieWithTypesResultMap">
+        SELECT
+            DISTINCT m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id
+        FROM
+            movie m
+            LEFT JOIN movie_movie_type mmt_fetch ON m.id = mmt_fetch.movie_id
+            LEFT JOIN movie_type mt ON mmt_fetch.movie_type_id = mt.id
+        <if test="movieTypeId != null">
+            INNER JOIN movie_movie_type mmt_filter ON m.id = mmt_filter.movie_id
+        </if>
+        <where>
+            <if test="title != null and title != ''">
+                AND m.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND m.status = #{status}
+            </if>
+            <if test="movieTypeId != null">
+                AND mmt_filter.movie_type_id = #{movieTypeId}
+            </if>
+        </where>
+        ORDER BY m.release_date DESC, m.id DESC
+    </select>
+    -->
+
+    <!-- 新增：查询热映口碑榜 (按评分排序) - 使用子查询确保返回 limit 数量的电影 -->
+    <select id="findHotPlayingMoviesOrderedByRating" resultMap="MovieWithTypesResultMap">
+        SELECT
+            m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id
+        FROM
+            (
+                -- 子查询：先找出评分最高的 limit 部电影的 ID
+                SELECT id
+                FROM movie
+                WHERE
+                    status = 'NOW_PLAYING'
+                    AND tmdb_vote_average IS NOT NULL
+                    AND tmdb_vote_count > 10
+                ORDER BY
+                    tmdb_vote_average DESC, tmdb_vote_count DESC
+                LIMIT #{limit}
+            ) AS top_movies
+        JOIN
+            movie m ON top_movies.id = m.id -- 使用 ID 连接主表
+        LEFT JOIN
+            movie_movie_type mmt ON m.id = mmt.movie_id -- 获取这些电影的类型
+        LEFT JOIN
+            movie_type mt ON mmt.movie_type_id = mt.id
+        ORDER BY
+            m.tmdb_vote_average DESC, m.tmdb_vote_count DESC -- 保持最终结果的排序一致性
+            -- 如果需要严格按照子查询的顺序，可以使用 ORDER BY FIELD(m.id, ...) 但通常重排一次更简单
+    </select>
+
+    <!-- 新增：查询最受期待榜 (按热度排序) -->
+    <select id="findUpcomingMoviesOrderedByPopularity" resultMap="MovieWithTypesResultMap">
+        SELECT
+            m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id
+        FROM
+            movie m
+        LEFT JOIN
+            movie_movie_type mmt ON m.id = mmt.movie_id
+        LEFT JOIN
+            movie_type mt ON mmt.movie_type_id = mt.id
+        WHERE
+            m.status = 'COMING_SOON' -- 假设期待是 COMING_SOON 状态
+            AND m.tmdb_popularity IS NOT NULL
+            AND m.release_date >= CURDATE() -- 只查询未来上映的
+        ORDER BY
+            m.tmdb_popularity DESC, m.release_date ASC -- 热度优先，再按上映日期
+        LIMIT #{limit}
+    </select>
+
+</mapper>

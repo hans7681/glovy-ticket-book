@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.backend.backend.mapper.SeatLockMapper">
+
+    <!-- Basic result map -->
+    <resultMap id="BaseResultMap" type="com.backend.backend.entity.SeatLock">
+        <id column="id" jdbcType="BIGINT" property="id" />
+        <result column="screening_id" jdbcType="BIGINT" property="screeningId" />
+        <result column="row_index" jdbcType="INTEGER" property="rowIndex" />
+        <result column="col_index" jdbcType="INTEGER" property="colIndex" />
+        <result column="user_id" jdbcType="BIGINT" property="userId" />
+        <result column="lock_expiry_time" jdbcType="TIMESTAMP" property="lockExpiryTime" />
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    </resultMap>
+
+    <!-- findActiveUserLocksForSeats -->
+    <select id="findActiveUserLocksForSeats" resultMap="BaseResultMap">
+        SELECT id, screening_id, row_index, col_index, user_id, lock_expiry_time, create_time
+        FROM seat_lock
+        WHERE user_id = #{userId,jdbcType=BIGINT}
+          AND screening_id = #{screeningId,jdbcType=BIGINT}
+          AND lock_expiry_time &gt; #{now,jdbcType=TIMESTAMP}
+          AND (row_index, col_index) IN
+        <foreach item="seat" collection="seats" open="(" separator="," close=")">
+            (#{seat.rowIndex,jdbcType=INTEGER}, #{seat.colIndex,jdbcType=INTEGER})
+        </foreach>
+    </select>
+
+    <!-- deleteUserLocksForSeats -->
+    <delete id="deleteUserLocksForSeats">
+        DELETE FROM seat_lock
+        WHERE user_id = #{userId,jdbcType=BIGINT}
+          AND screening_id = #{screeningId,jdbcType=BIGINT}
+          AND (row_index, col_index) IN
+        <foreach item="seat" collection="seats" open="(" separator="," close=")">
+            (#{seat.rowIndex,jdbcType=INTEGER}, #{seat.colIndex,jdbcType=INTEGER})
+        </foreach>
+    </delete>
+
+    <!-- deleteExpiredLocks -->
+    <delete id="deleteExpiredLocks">
+        DELETE FROM seat_lock
+        WHERE lock_expiry_time &lt;= #{expiryTime,jdbcType=TIMESTAMP}
+    </delete>
+
+    <!-- findAnyActiveLocksForSeats -->
+     <select id="findAnyActiveLocksForSeats" resultMap="BaseResultMap">
+        SELECT id, screening_id, row_index, col_index, user_id, lock_expiry_time, create_time
+        FROM seat_lock
+        WHERE screening_id = #{screeningId,jdbcType=BIGINT}
+          AND lock_expiry_time &gt; #{now,jdbcType=TIMESTAMP}
+          AND (row_index, col_index) IN
+        <foreach item="seat" collection="seats" open="(" separator="," close=")">
+            (#{seat.rowIndex,jdbcType=INTEGER}, #{seat.colIndex,jdbcType=INTEGER})
+        </foreach>
+    </select>
+
+    <!-- findSoldSeatsForScreening -->
+    <select id="findSoldSeatsForScreening" resultType="com.backend.backend.dto.SeatIdentifier">
+        SELECT row_index AS rowIndex, col_index AS colIndex
+        FROM order_seat -- Query the order seat table
+        WHERE screening_id = #{screeningId,jdbcType=BIGINT}
+          AND (row_index, col_index) IN
+        <foreach item="seat" collection="seats" open="(" separator="," close=")">
+            (#{seat.rowIndex,jdbcType=INTEGER}, #{seat.colIndex,jdbcType=INTEGER})
+        </foreach>
+    </select>
+
+</mapper>

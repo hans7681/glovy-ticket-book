@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.backend.backend.mapper.OrderMapper">
+
+    <!-- 统计订单总数 (也可以用 selectCount(null) 代替) -->
+    <select id="countTotalOrders" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM t_order
+    </select>
+
+    <!-- 计算总销售额 (仅 PAID 状态) -->
+    <select id="sumTotalPaidRevenue" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(total_amount), 0)
+        FROM t_order
+        WHERE status = 'PAID'
+    </select>
+
+    <!-- 按日期分组统计指定时间范围内的订单数量 (仅 PAID) -->
+    <select id="countOrdersGroupedByDate" resultType="java.util.Map">
+        SELECT
+            DATE_FORMAT(payment_time, '%Y-%m-%d') as order_date,
+            COUNT(*) as count
+        FROM
+            t_order
+        WHERE
+            status = 'PAID'
+            AND payment_time >= #{startDate}
+            AND payment_time &lt; #{endDate}
+        GROUP BY
+            order_date
+        ORDER BY
+            order_date ASC
+    </select>
+
+    <!-- 按电影分组统计已支付订单的总销售额，并按销售额降序排序 -->
+    <select id="sumPaidRevenueGroupedByMovie" resultType="java.util.Map">
+        SELECT
+            movie_id,
+            SUM(total_amount) as total_revenue
+        FROM
+            t_order
+        WHERE
+            status = 'PAID'
+        GROUP BY
+            movie_id
+        ORDER BY
+            total_revenue DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询指定时间点之前创建的待支付订单ID -->
+    <select id="findTimedOutPendingOrderIds" resultType="long">
+        SELECT id FROM t_order
+        WHERE status = 'PENDING_PAYMENT' AND create_time &lt; #{cutoffTime}
+    </select>
+
+    <!-- 批量更新订单状态为已取消 -->
+    <update id="batchCancelOrders">
+        UPDATE t_order
+        SET status = 'CANCELLED', cancel_time = #{cancelTime}, update_time = #{cancelTime}
+        WHERE id IN
+        <foreach item="id" collection="orderIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND status = 'PENDING_PAYMENT' <!-- 再次确认状态，防止并发问题 -->
+    </update>
+
+</mapper>
+
+

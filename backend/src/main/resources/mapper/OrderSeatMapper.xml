@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.backend.backend.mapper.OrderSeatMapper">
+
+    <!-- Basic result map if needed, though often not required for simple entities -->
+    <resultMap id="BaseResultMap" type="com.backend.backend.entity.OrderSeat">
+        <id column="id" jdbcType="BIGINT" property="id" />
+        <result column="order_id" jdbcType="BIGINT" property="orderId" />
+        <result column="screening_id" jdbcType="BIGINT" property="screeningId" />
+        <result column="row_index" jdbcType="INTEGER" property="rowIndex" />
+        <result column="col_index" jdbcType="INTEGER" property="colIndex" />
+        <!-- Add seat_label if you decide to store it -->
+        <result column="seat_label" jdbcType="VARCHAR" property="seatLabel" />
+    </resultMap>
+
+    <!-- Batch Insert for Order Seats -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO order_seat (order_id, screening_id, row_index, col_index, seat_label)
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+                #{item.orderId,jdbcType=BIGINT},
+                #{item.screeningId,jdbcType=BIGINT},
+                #{item.rowIndex,jdbcType=INTEGER},
+                #{item.colIndex,jdbcType=INTEGER},
+                #{item.seatLabel,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 批量删除指定订单ID关联的座位记录 -->
+    <delete id="deleteSeatsByOrderIds">
+        DELETE FROM order_seat
+        WHERE order_id IN
+        <foreach item="id" collection="orderIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- You might add other custom queries here if needed -->
+
+</mapper> 

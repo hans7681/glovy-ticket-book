@@ -1,0 +1,17 @@
+<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Glovy 文字 -->
+  <text x="100" y="45" font-family="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" font-size="30" font-weight="bold" fill="#333" text-anchor="middle">Gl
+    <tspan dy="-0.05em">o</tspan> <!-- 轻微调整 o 的基线，使其更像视觉中心 -->
+  vy</text>
+
+  <!-- 在 'o' 的大致位置添加光点 -->
+  <!-- 注意：这里的位置 (x=87, y=35) 是基于上面文字和字体的估算，可能需要精确调整 -->
+  <circle cx="87" cy="35" r="4" fill="#FFD700" />
+  <circle cx="87" cy="35" r="7" fill="#FFA500" fill-opacity="0.5"/>
+
+  <!-- 光维娱乐 文字 -->
+  <text x="100" y="78" font-family="'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif" font-size="18" fill="#555" text-anchor="middle">光维娱乐</text>
+
+  <!-- <rect x="0" y="0" width="200" height="100" fill="none" stroke="lightgrey"/> -->
+</svg>

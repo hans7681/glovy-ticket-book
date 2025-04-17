@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.backend.backend.mapper.FavoriteMapper">
+
+    <!-- 插入收藏记录 -->
+    <insert id="insert" parameterType="com.backend.backend.entity.Favorite">
+        INSERT INTO favorite (user_id, movie_id, create_time)
+        VALUES (#{userId}, #{movieId}, NOW())
+        <!-- 可选：处理主键冲突，如果已存在则忽略 -->
+        ON DUPLICATE KEY UPDATE user_id = user_id
+    </insert>
+
+    <!-- 删除收藏记录 -->
+    <delete id="deleteByUserIdAndMovieId">
+        DELETE FROM favorite
+        WHERE user_id = #{userId} AND movie_id = #{movieId}
+    </delete>
+
+    <!-- 查询单个收藏记录 -->
+    <select id="findByUserIdAndMovieId" resultType="com.backend.backend.entity.Favorite">
+        SELECT user_id, movie_id, create_time
+        FROM favorite
+        WHERE user_id = #{userId} AND movie_id = #{movieId}
+    </select>
+
+    <!-- 检查收藏状态 -->
+    <select id="checkFavoriteStatus" resultType="int">
+        SELECT COUNT(*)
+        FROM favorite
+        WHERE user_id = #{userId} AND movie_id = #{movieId}
+    </select>
+
+    <!-- 分页查询用户收藏的电影列表 -->
+    <!-- 注意：MyBatis Plus 分页插件会自动处理 limit 和 offset -->
+    <!-- 需要返回 Movie 对象，并处理电影类型 -->
+    <select id="findFavoriteMoviesByUserId" resultMap="com.backend.backend.mapper.MovieMapper.MovieWithTypesResultMap">
+        SELECT
+            m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id,
+            f.create_time as favorite_create_time <!-- 可以在 Movie 对象中添加一个临时字段接收收藏时间，或者忽略 -->
+        FROM
+            favorite f
+        JOIN
+            movie m ON f.movie_id = m.id
+        LEFT JOIN
+            movie_movie_type mmt ON m.id = mmt.movie_id
+        LEFT JOIN
+            movie_type mt ON mmt.movie_type_id = mt.id
+        WHERE
+            f.user_id = #{userId}
+        ORDER BY
+            f.create_time DESC -- 按收藏时间降序排列
+    </select>
+
+     <!-- 统计用户收藏的电影总数 -->
+    <select id="countFavoriteMoviesByUserId" resultType="long">
+        SELECT COUNT(*)
+        FROM favorite
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 新增：手动分页查询用户收藏的电影列表 -->
+    <select id="findFavoriteMoviesByUserIdManualPaging" resultMap="com.backend.backend.mapper.MovieMapper.MovieWithTypesResultMap">
+        SELECT
+            m.id AS m_id, m.title AS m_title, m.director AS m_director, m.actors AS m_actors, m.duration AS m_duration,
+            m.description AS m_description, m.poster_url AS m_poster_url, m.release_date AS m_release_date, m.country AS m_country,
+            m.status AS m_status, m.trailer_url AS m_trailer_url, m.tmdb_id AS m_tmdb_id, m.tmdb_vote_average AS m_tmdb_vote_average,
+            m.tmdb_vote_count AS m_tmdb_vote_count, m.tmdb_popularity AS m_tmdb_popularity, m.total_box_office AS m_total_box_office,
+            m.average_rating AS m_average_rating, m.create_time AS m_create_time, m.update_time AS m_update_time,
+            mt.id AS mt_id, mt.name AS mt_name, mt.tmdb_genre_id AS mt_tmdb_genre_id,
+            f.create_time as favorite_create_time
+        FROM
+            favorite f
+        JOIN
+            movie m ON f.movie_id = m.id
+        LEFT JOIN
+            movie_movie_type mmt ON m.id = mmt.movie_id
+        LEFT JOIN
+            movie_type mt ON mmt.movie_type_id = mt.id
+        WHERE
+            f.user_id = #{userId}
+        ORDER BY
+            f.create_time DESC -- 按收藏时间降序排列
+        LIMIT #{offset}, #{limit} -- 显式使用 LIMIT
+    </select>
+
+</mapper>
