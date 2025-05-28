@@ -1,0 +1,7055 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "影院管理系统 API",
+    "description": "影院管理系统后端 API 文档",
+    "contact": {
+      "name": "开发团队"
+    },
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "JWT": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "影院信息管理",
+      "description": "包含多角色操作影院信息的接口"
+    },
+    {
+      "name": "系统管理员 - 用户管理",
+      "description": "系统管理员管理用户信息接口 (需要系统管理员权限)"
+    },
+    {
+      "name": "电影类型",
+      "description": "公共电影类型信息获取"
+    },
+    {
+      "name": "用户 - 个人资料管理",
+      "description": "管理用户自己的个人信息"
+    },
+    {
+      "name": "订单管理",
+      "description": "包含用户创建/查询/取消订单、管理员查询订单的接口"
+    },
+    {
+      "name": "影院管理员 - 影厅管理",
+      "description": "影院管理员管理其所属影院的影厅信息 (需要影院管理员权限)"
+    },
+    {
+      "name": "公告管理",
+      "description": "包含管理员和用户查看公告的接口"
+    },
+    {
+      "name": "场次管理",
+      "description": "包含影院管理员申请/管理、系统管理员审批、用户查询场次的接口"
+    },
+    {
+      "name": "支付宝支付相关接口",
+      "description": "包括创建支付、支付回调等接口"
+    },
+    {
+      "name": "系统管理员 - 数据管理",
+      "description": "提供数据填充和导入功能"
+    },
+    {
+      "name": "认证",
+      "description": "用户注册与登录接口"
+    },
+    {
+      "name": "管理员 - 统计信息",
+      "description": "提供管理员仪表盘所需的统计数据接口 (需要系统管理员权限)"
+    },
+    {
+      "name": "管理员 - 电影类型管理",
+      "description": "管理电影类型信息 (需要系统管理员权限)"
+    },
+    {
+      "name": "电影信息管理",
+      "description": "包含管理员操作和用户查看电影信息的接口"
+    }
+  ],
+  "paths": {
+    "/api/profile": {
+      "get": {
+        "tags": ["用户 - 个人资料管理"],
+        "summary": "获取当前用户个人资料",
+        "description": "获取当前登录用户的详细个人信息（不含密码）。",
+        "operationId": "getCurrentUserProfile",
+        "responses": {
+          "200": {
+            "description": "成功获取个人资料",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在（理论上不应发生，因为是基于认证用户）"
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["用户 - 个人资料管理"],
+        "summary": "更新当前用户个人资料",
+        "description": "更新当前登录用户的昵称、头像、手机或邮箱。用户名和角色不可修改。",
+        "operationId": "updateCurrentUserProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在（理论上不应发生）",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "资源冲突（手机号或邮箱已被其他用户占用）",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          },
+          "400": {
+            "description": "请求参数无效（如格式错误）",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/profile/password": {
+      "put": {
+        "tags": ["用户 - 个人资料管理"],
+        "summary": "修改当前用户密码",
+        "description": "验证旧密码并设置新密码。",
+        "operationId": "changeCurrentUserPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "用户不存在（理论上不应发生）",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "密码修改成功"
+          },
+          "400": {
+            "description": "请求无效（如密码不匹配、格式错误、旧密码错误）",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/orders/{identifier}/mark-as-paid": {
+      "put": {
+        "tags": ["订单管理", "用户 - 订单操作"],
+        "summary": "(模拟)标记订单为已支付",
+        "description": "将指定订单的状态从 PENDING_PAYMENT 更新为 PAID。用户只能操作自己的订单。",
+        "operationId": "markOrderAsPaid",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "description": "订单ID (数字) 或订单号 (字符串)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "订单状态更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作该订单",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "订单不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "操作失败，订单状态不正确或无效操作",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/orders/{identifier}/cancel": {
+      "put": {
+        "tags": ["订单管理", "用户 - 订单操作"],
+        "summary": "取消我的订单",
+        "description": "用户取消处于待支付(PENDING_PAYMENT)状态的订单。其他状态的订单无法取消。",
+        "operationId": "cancelMyOrder",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "description": "订单ID (数字) 或订单号 (字符串)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "无权操作该订单",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "订单不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "取消失败，订单状态不允许取消",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "订单已支付，无法取消",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "订单取消成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/cinema-admin/rooms/{roomId}": {
+      "get": {
+        "tags": ["影院管理员 - 影厅管理"],
+        "summary": "获取影厅详情",
+        "description": "根据 ID 获取当前管理员所属影院的单个影厅详情。",
+        "operationId": "getRoomById",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "影厅 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取影厅详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "example": {
+                  "id": 1,
+                  "cinemaId": 1,
+                  "name": "1号厅",
+                  "rows": 10,
+                  "cols": 15,
+                  "createTime": "2024-05-20T15:00:00",
+                  "updateTime": "2024-05-21T11:00:00"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足或无权查看该影厅",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "影厅不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["影院管理员 - 影厅管理"],
+        "summary": "更新影厅信息",
+        "description": "根据 ID 更新当前管理员所属影院的影厅信息，例如修改名称或座位布局。",
+        "operationId": "updateRoom",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "要更新的影厅 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "更新后的影厅信息，roomId 和 cinemaId 会被后端覆盖或校验。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Room"
+              },
+              "example": {
+                "name": "激光厅",
+                "rows": 9,
+                "cols": 14
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误或更新失败",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "更新失败，影厅名称重复",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足或无权修改该影厅",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "影厅不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["影院管理员 - 影厅管理"],
+        "summary": "删除影厅",
+        "description": "根据 ID 删除当前管理员所属影院的影厅。如果影厅有关联的未完成场次，可能无法删除。",
+        "operationId": "deleteRoom",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "要删除的影厅 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "删除成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "删除失败，例如影厅存在关联场次",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "影厅尚有关联场次，无法删除",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "影厅不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足或无权删除该影厅",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cinema-admin/cinema": {
+      "get": {
+        "tags": ["影院管理员 - 影院管理", "影院信息管理"],
+        "summary": "获取自己管理的影院信息",
+        "description": "获取当前影院管理员账户关联的影院信息。如果未申请影院或影院申请未批准，将返回404。",
+        "operationId": "getMyCinema",
+        "responses": {
+          "200": {
+            "description": "成功获取影院信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                },
+                "example": {
+                  "id": 1,
+                  "name": "星光影院",
+                  "address": "北京市海淀区中关村大街1号",
+                  "phone": "010-12345678",
+                  "logo": "https://example.com/logos/starlight.png",
+                  "description": "位于市中心的现代化影院，拥有6个放映厅，提供舒适的观影体验。",
+                  "adminUserId": 10,
+                  "status": "APPROVED",
+                  "createTime": "2023-05-01T14:30:45",
+                  "updateTime": "2023-05-02T10:15:23"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要影院管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "未找到影院信息，可能是尚未申请或申请未批准",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["影院管理员 - 影院管理", "影院信息管理"],
+        "summary": "更新自己管理的影院信息",
+        "description": "更新当前影院管理员账户关联的影院信息。仅当影院状态为APPROVED时才能更新。",
+        "operationId": "updateMyCinema",
+        "requestBody": {
+          "description": "要更新的影院信息，ID必须匹配当前管理的影院",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cinema"
+              },
+              "example": {
+                "id": 1,
+                "name": "星光国际影院",
+                "address": "北京市海淀区中关村大街1号科技广场B座",
+                "phone": "010-87654321",
+                "logo": "https://example.com/logos/starlight-new.png",
+                "description": "全新升级的星光国际影院，拥有IMAX厅和全新的4D体验厅。"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误或更新失败",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "更新失败，影院状态非法",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "未找到影院信息",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，可能是非影院管理员或尝试修改非自己管理的影院",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "无权修改该影院或影院不存在",
+                  "code": 403
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功更新影院信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "tags": ["系统管理员 - 用户管理"],
+        "summary": "获取用户详情",
+        "description": "根据用户 ID 获取用户详细信息，包括基本资料但不包含密码。",
+        "operationId": "getUserById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取用户详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "example": {
+                  "id": 1,
+                  "username": "admin",
+                  "nickname": "系统管理员",
+                  "phone": "13800000000",
+                  "email": "admin@example.com",
+                  "role": "SYSTEM_ADMIN",
+                  "createTime": "2023-01-01T12:00:00",
+                  "updateTime": "2023-01-01T12:00:00"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "用户不存在",
+                  "code": 404
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["系统管理员 - 用户管理"],
+        "summary": "更新用户信息",
+        "description": "更新用户的昵称、手机、邮箱、角色等信息。不能通过此接口修改密码，密码修改应使用专用接口。",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要更新的用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "需要更新的用户信息。用户名不可修改，密码字段将被忽略。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              },
+              "example": {
+                "nickname": "新昵称",
+                "phone": "13800000001",
+                "email": "newemail@example.com",
+                "role": "CINEMA_ADMIN"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "请求参数错误，例如手机号或邮箱格式不正确",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "手机号格式不正确",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "资源冲突，例如手机号或邮箱已被其他用户使用",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "该邮箱已被使用",
+                  "code": 409
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "更新成功，返回更新后的用户信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["系统管理员 - 用户管理"],
+        "summary": "删除用户",
+        "description": "根据 ID 删除用户账号。实际操作为逻辑删除（标记用户为禁用状态），不会物理删除数据。",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要删除的用户 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "删除成功，无返回内容"
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          },
+          "404": {
+            "description": "用户不存在"
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限"
+          },
+          "400": {
+            "description": "操作失败，例如用户有关联的进行中订单",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "该用户有未完成的订单，无法删除",
+                  "code": 400
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/screenings/{id}/review": {
+      "put": {
+        "tags": ["场次管理", "系统管理员 - 场次管理"],
+        "summary": "审批场次申请",
+        "description": "审批处于 PENDING_APPROVAL 状态的场次申请。批准后状态变为 APPROVED，拒绝则变为 REJECTED。",
+        "operationId": "reviewScreening",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "待审批的场次 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "审批请求，包含是否批准",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreeningReviewRequest"
+              },
+              "example": {
+                "approved": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "审批成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Screening"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "审批失败，例如场次状态不是待审批",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "该场次不是待审批状态",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "场次不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/movies/{id}": {
+      "put": {
+        "tags": ["管理员 - 电影信息管理", "电影信息管理"],
+        "summary": "更新电影信息",
+        "description": "根据ID更新电影信息并处理类型关联。一部电影至少需要关联一个类型，最多可关联三个类型。",
+        "operationId": "updateMovie",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要更新的电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "更新后的电影信息，必须包含电影类型ID列表",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Movie"
+              },
+              "example": {
+                "title": "功夫 (重映版)",
+                "director": "周星驰",
+                "actors": "周星驰,元秋,元华,黄圣依",
+                "duration": 95,
+                "description": "1940年代的上海，小混混阿星（周星驰 饰）想要成为黑社会...",
+                "posterUrl": "https://example.com/posters/kungfu-hustle-remastered.jpg",
+                "releaseDate": "2023-10-01",
+                "country": "中国香港",
+                "status": "NOW_PLAYING",
+                "movieTypeIds": [1, 2, 3]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "成功更新电影",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误，例如电影类型数量不符合要求",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "电影最多关联3个类型",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "电影不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["管理员 - 电影信息管理", "电影信息管理"],
+        "summary": "删除电影",
+        "description": "根据ID删除电影及其关联信息。如果电影有关联的排片信息，可能无法删除。",
+        "operationId": "deleteMovie",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要删除的电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "操作失败，例如电影存在关联的场次数据",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "该电影存在关联的场次数据，无法删除",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "删除成功"
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限"
+          },
+          "404": {
+            "description": "电影不存在"
+          }
+        }
+      }
+    },
+    "/api/admin/movie-types/{id}": {
+      "get": {
+        "tags": ["管理员 - 电影类型管理"],
+        "summary": "根据 ID 获取电影类型详情",
+        "description": "获取指定 ID 的电影类型详细信息。",
+        "operationId": "getMovieTypeById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "电影类型 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "电影类型不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取类型详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                },
+                "example": {
+                  "id": 1,
+                  "name": "喜剧",
+                  "tmdbGenreId": 35
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["管理员 - 电影类型管理"],
+        "summary": "根据 ID 更新电影类型信息",
+        "description": "更新指定 ID 的电影类型信息，例如修改名称或关联的 TMDB ID。",
+        "operationId": "updateMovieType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要更新的电影类型 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "更新后的电影类型信息。ID 字段会被忽略。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovieType"
+              },
+              "example": {
+                "name": "喜剧片",
+                "tmdbGenreId": 35
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "更新失败，例如类型名称已存在",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "电影类型名称已存在",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "电影类型不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["管理员 - 电影类型管理"],
+        "summary": "根据 ID 删除电影类型",
+        "description": "删除指定 ID 的电影类型。如果该类型已被电影关联，可能无法删除。",
+        "operationId": "deleteMovieType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要删除的电影类型 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "删除成功"
+          },
+          "400": {
+            "description": "删除失败，例如该类型已被电影关联",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "该类型已被电影关联，无法删除",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          },
+          "404": {
+            "description": "电影类型不存在"
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限"
+          }
+        }
+      }
+    },
+    "/api/admin/cinemas/{id}": {
+      "get": {
+        "tags": ["系统管理员 - 影院管理", "影院信息管理"],
+        "summary": "获取指定影院详情",
+        "description": "根据ID获取任意状态的影院详情。系统管理员可以查看任何状态的影院。",
+        "operationId": "getCinemaByIdForAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "影院 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "影院不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取影院详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                },
+                "example": {
+                  "id": 1,
+                  "name": "星光影院",
+                  "address": "北京市海淀区中关村大街1号",
+                  "phone": "010-12345678",
+                  "logo": "https://example.com/logos/starlight.png",
+                  "description": "位于市中心的现代化影院，拥有6个放映厅，提供舒适的观影体验。",
+                  "adminUserId": 10,
+                  "status": "PENDING_APPROVAL",
+                  "createTime": "2023-05-01T14:30:45",
+                  "updateTime": "2023-05-01T14:30:45"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["系统管理员 - 影院管理", "影院信息管理"],
+        "summary": "系统管理员更新影院信息",
+        "description": "系统管理员直接更新影院信息，权限较大，可以修改任何影院信息。",
+        "operationId": "updateCinemaBySystemAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要更新的影院 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "更新后的影院信息",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cinema"
+              },
+              "example": {
+                "name": "星光国际影院",
+                "address": "北京市海淀区中关村大街1号科技广场B座",
+                "phone": "010-87654321",
+                "logo": "https://example.com/logos/starlight-new.png",
+                "description": "全新升级的星光国际影院，拥有IMAX厅和全新的4D体验厅。",
+                "adminUserId": 15,
+                "status": "APPROVED"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "影院不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误或更新失败",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/cinemas/{id}/status": {
+      "put": {
+        "tags": ["系统管理员 - 影院管理", "影院信息管理"],
+        "summary": "更新影院状态",
+        "description": "更新影院的状态，例如禁用(DISABLED)或重新启用(APPROVED)影院。",
+        "operationId": "updateCinemaStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要更新状态的影院 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "状态更新请求",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CinemaStatusUpdateRequest"
+              },
+              "example": {
+                "status": "DISABLED"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "影院不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误或状态更新失败",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "无效的状态更新请求",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "状态更新成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/cinemas/{id}/review": {
+      "put": {
+        "tags": ["系统管理员 - 影院管理", "影院信息管理"],
+        "summary": "审核影院申请",
+        "description": "审核处于PENDING_APPROVAL状态的影院申请。批准操作会自动将关联用户的角色从USER更新为CINEMA_ADMIN。拒绝操作会解除用户关联。",
+        "operationId": "reviewCinema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "待审核的影院 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "审核请求 (注意：body 中的 adminUserId 字段在新流程下已无效，无需提供)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CinemaReviewRequest"
+              },
+              "example": {
+                "approved": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "影院不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "审核成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                },
+                "example": {
+                  "id": 1,
+                  "name": "星光影院",
+                  "address": "北京市海淀区中关村大街1号",
+                  "phone": "010-12345678",
+                  "logo": "https://example.com/logos/starlight.png",
+                  "description": "位于市中心的现代化影院，拥有6个放映厅，提供舒适的观影体验。",
+                  "adminUserId": 10,
+                  "status": "APPROVED",
+                  "createTime": "2023-05-01T14:30:45",
+                  "updateTime": "2023-05-02T10:15:23"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误、影院状态不是待审核状态、或更新用户角色失败",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "影院不是待审核状态 或 关联的用户ID无效 或 更新用户角色失败...",
+                  "code": 400
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/announcements/{id}": {
+      "get": {
+        "tags": ["系统管理员 - 公告管理", "公告管理"],
+        "summary": "获取公告详情",
+        "description": "根据ID获取单个公告详情。系统管理员可以查看任何状态的公告详情。",
+        "operationId": "getAnnouncementByIdForAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "公告 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取公告详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                },
+                "example": {
+                  "id": 1,
+                  "title": "系统维护通知",
+                  "content": "系统将于2023年2月1日凌晨2点进行维护升级，预计2小时。",
+                  "publisherId": 1,
+                  "isPublished": true,
+                  "publishTime": "2023-01-30T15:00:00",
+                  "createTime": "2023-01-30T14:25:33",
+                  "updateTime": "2023-01-30T15:00:00"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "公告不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["系统管理员 - 公告管理", "公告管理"],
+        "summary": "更新公告信息",
+        "description": "更新指定ID的公告内容。只能修改标题和内容，其他属性如发布状态不会被修改。",
+        "operationId": "updateAnnouncement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "公告 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "需要更新的公告信息，只有标题和内容会被更新。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Announcement"
+              },
+              "example": {
+                "title": "系统维护通知（已更新）",
+                "content": "系统维护时间已调整为2023年2月2日凌晨3点，预计1小时。"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "公告不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["系统管理员 - 公告管理", "公告管理"],
+        "summary": "删除公告",
+        "description": "删除指定ID的公告。注意：此操作不可恢复。",
+        "operationId": "deleteAnnouncement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "公告 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "删除成功"
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限"
+          },
+          "404": {
+            "description": "公告不存在"
+          }
+        }
+      }
+    },
+    "/api/admin/announcements/{id}/publish": {
+      "put": {
+        "tags": ["系统管理员 - 公告管理", "公告管理"],
+        "summary": "发布/取消发布公告",
+        "description": "更新公告的发布状态。发布时会记录当前时间为发布时间，取消发布时会清除发布时间。",
+        "operationId": "publishAnnouncement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "公告 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "发布状态请求体",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishRequest"
+              },
+              "example": {
+                "publish": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "操作成功，返回更新后的公告",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "操作失败，可能是公告状态已经是目标状态",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "公告已经是发布状态",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "公告不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/screenings/{screeningId}/lock-seats": {
+      "post": {
+        "tags": ["用户 - 在线选座", "场次管理"],
+        "summary": "锁定座位",
+        "description": "尝试为当前用户锁定指定场次的多个座位。成功后返回锁定的记录，失败则返回错误信息。",
+        "operationId": "lockSeats",
+        "parameters": [
+          {
+            "name": "screeningId",
+            "in": "path",
+            "description": "场次 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LockSeatsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "场次不存在"
+          },
+          "409": {
+            "description": "座位已被锁定或售出"
+          },
+          "200": {
+            "description": "座位锁定成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeatLock"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "用户未登录"
+          },
+          "400": {
+            "description": "请求无效（如未选择座位、重复座位、无效座位号）"
+          }
+        }
+      }
+    },
+    "/api/payment/alipay/notify": {
+      "post": {
+        "tags": ["支付宝支付相关接口"],
+        "summary": "支付宝异步通知",
+        "description": "接收并处理支付宝的支付结果通知",
+        "operationId": "handleAlipayNotification",
+        "parameters": [
+          {
+            "name": "params",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payment/alipay/create/{orderNo}": {
+      "post": {
+        "tags": ["支付宝支付相关接口"],
+        "summary": "创建支付宝支付",
+        "description": "根据订单号创建支付宝支付订单，返回支付表单HTML",
+        "operationId": "createPayment",
+        "parameters": [
+          {
+            "name": "orderNo",
+            "in": "path",
+            "description": "订单号",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "frontendUrl",
+            "in": "query",
+            "description": "前端回调URL，如http://localhost:5174",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "http://localhost:5173"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "tags": ["订单管理", "用户 - 订单操作"],
+        "summary": "获取我的订单列表",
+        "description": "分页获取当前用户的订单列表，可按状态筛选。",
+        "operationId": "listMyOrders",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 10
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "按订单状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING_PAYMENT", "PAID", "CANCELLED", "REFUNDED", "COMPLETED"]
+            },
+            "example": "PAID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取订单列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": {
+                  "records": [
+                    {
+                      "id": 1,
+                      "orderNo": "20240521103015001",
+                      "userId": 5,
+                      "screeningId": 1,
+                      "cinemaId": 1,
+                      "movieId": 1,
+                      "movieTitle": "功夫",
+                      "cinemaName": "星光影院",
+                      "screeningTime": "2025-01-30T10:00:00",
+                      "totalPrice": 90,
+                      "status": "PAID",
+                      "createTime": "2024-05-21T10:30:15"
+                    }
+                  ],
+                  "total": 1,
+                  "size": 10,
+                  "current": 1,
+                  "pages": 1
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["订单管理", "用户 - 订单操作"],
+        "summary": "创建新订单",
+        "description": "用户选择场次和座位后创建新订单。订单创建后状态为 PENDING_PAYMENT。",
+        "operationId": "createOrder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "订单创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderVO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "场次不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          },
+          "400": {
+            "description": "请求参数错误 (如座位信息无效、场次状态不允许购票)"
+          },
+          "409": {
+            "description": "资源冲突 (座位锁定失效或已被购买)"
+          },
+          "401": {
+            "description": "未授权，需要登录"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/movies/{movieId}/rate": {
+      "post": {
+        "tags": ["用户 - 收藏与评分", "电影信息管理"],
+        "summary": "添加或更新电影评分/评论",
+        "description": "用户对电影进行评分(1-10)和评论。如果已评分则更新。需要用户认证。",
+        "operationId": "rateMovie",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "评分信息",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatingRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "请求参数无效 (如评分超出范围)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "评分成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "电影不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/{movieId}/favorite": {
+      "post": {
+        "tags": ["用户 - 收藏与评分", "电影信息管理"],
+        "summary": "收藏电影",
+        "description": "将指定电影添加到当前用户的收藏列表。需要用户认证。",
+        "operationId": "addFavorite",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "409": {
+            "description": "已收藏",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "电影不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "收藏成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["用户 - 收藏与评分", "电影信息管理"],
+        "summary": "取消收藏电影",
+        "description": "将指定电影从当前用户的收藏列表中移除。需要用户认证。",
+        "operationId": "removeFavorite",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权"
+          },
+          "204": {
+            "description": "取消收藏成功"
+          },
+          "404": {
+            "description": "未找到收藏记录"
+          }
+        }
+      }
+    },
+    "/api/cinemas/partnership-application": {
+      "post": {
+        "tags": ["用户 - 影院入驻申请", "影院信息管理"],
+        "summary": "提交影院合作入驻申请",
+        "description": "普通用户提交新的影院合作申请信息。提交后，状态为待审核，需要系统管理员审核。",
+        "operationId": "handlePartnershipApplication",
+        "requestBody": {
+          "description": "影院合作申请信息",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CinemaPartnershipApplicationRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "申请提交成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                },
+                "example": {
+                  "id": 123,
+                  "name": "未来影城",
+                  "address": "上海市浦东新区世纪大道100号",
+                  "phone": "021-88888888",
+                  "logo": "https://example.com/logos/future-cinema.png",
+                  "description": "配备最新激光放映设备",
+                  "adminUserId": 5,
+                  "status": "PENDING_APPROVAL",
+                  "createTime": "2024-07-28T10:00:00",
+                  "updateTime": "2024-07-28T10:00:00"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，用户不是普通用户",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "只有普通用户才能申请影院合作",
+                  "code": 403
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "冲突，用户已有影院或申请",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "您已有关联的影院或正在审核中的申请",
+                  "code": 409
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数无效 (如必填项缺失)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "影院名称不能为空",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，用户未登录",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "用户未登录",
+                  "code": 401
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/cinema-admin/screenings": {
+      "get": {
+        "tags": ["场次管理", "影院管理员 - 场次管理"],
+        "summary": "获取自己影院的场次列表",
+        "description": "分页获取当前管理员所属影院的场次列表，可按电影、日期、状态筛选。",
+        "operationId": "listMyScreenings",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 10
+          },
+          {
+            "name": "movieId",
+            "in": "query",
+            "description": "按电影 ID 筛选",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "按日期筛选 (格式: yyyy-MM-dd)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2025-01-30"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "按状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED", "FINISHED", "CANCELLED"]
+            },
+            "example": "APPROVED"
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "权限不足，需要影院管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取场次列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": {
+                  "records": [
+                    {
+                      "id": 1,
+                      "cinemaId": 1,
+                      "roomId": 1,
+                      "movieId": 1,
+                      "startTime": "2025-01-30T10:00:00",
+                      "endTime": "2025-01-30T12:00:00",
+                      "price": 45,
+                      "status": "APPROVED"
+                    }
+                  ],
+                  "total": 1,
+                  "size": 10,
+                  "current": 1,
+                  "pages": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["场次管理", "影院管理员 - 场次管理"],
+        "summary": "申请新场次",
+        "description": "影院管理员为其影院的影厅申请新的电影放映场次。申请后场次状态为 PENDING_APPROVAL。",
+        "operationId": "applyForScreening",
+        "requestBody": {
+          "description": "场次申请信息，包含影厅ID、电影ID、开始时间和价格。cinemaId 将由后端根据管理员信息自动填充。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreeningRequest"
+              },
+              "example": {
+                "roomId": 1,
+                "movieId": 1,
+                "startTime": "2025-01-30T10:00:00",
+                "price": 45
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "请求参数错误，例如时间冲突或价格无效",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "指定时间段内该影厅已有排片",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要影院管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "场次申请创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Screening"
+                },
+                "example": {
+                  "id": 1,
+                  "cinemaId": 1,
+                  "roomId": 1,
+                  "movieId": 1,
+                  "startTime": "2025-01-30T10:00:00",
+                  "endTime": "2025-01-30T12:00:00",
+                  "price": 45,
+                  "status": "PENDING_APPROVAL",
+                  "createTime": "2024-05-20T14:00:00"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cinema-admin/rooms": {
+      "get": {
+        "tags": ["影院管理员 - 影厅管理"],
+        "summary": "获取影厅列表",
+        "description": "获取当前管理员所属影院的所有影厅列表。",
+        "operationId": "listMyRooms",
+        "responses": {
+          "403": {
+            "description": "权限不足，需要影院管理员权限或未关联影院",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取影厅列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "cinemaId": 1,
+                    "name": "1号厅",
+                    "rows": 10,
+                    "cols": 15
+                  },
+                  {
+                    "id": 2,
+                    "cinemaId": 1,
+                    "name": "IMAX厅",
+                    "rows": 8,
+                    "cols": 12
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["影院管理员 - 影厅管理"],
+        "summary": "添加新影厅",
+        "description": "向当前管理员所属的影院添加一个新的影厅。需要提供影厅名称、行数、列数。",
+        "operationId": "addRoom",
+        "requestBody": {
+          "description": "影厅信息，cinemaId 会被后端根据当前管理员信息覆盖。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Room"
+              },
+              "example": {
+                "name": "1号厅",
+                "rows": 10,
+                "cols": 15
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "权限不足，需要影院管理员权限或未关联影院",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "影厅创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "example": {
+                  "id": 1,
+                  "cinemaId": 1,
+                  "name": "1号厅",
+                  "rows": 10,
+                  "cols": 15,
+                  "createTime": "2024-05-20T15:00:00"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误，例如影厅名称重复或行列数无效",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "影厅名称已存在",
+                  "code": 400
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cinema-admin/cinemas/apply": {
+      "post": {
+        "tags": ["影院管理员 - 影院管理", "影院信息管理"],
+        "summary": "申请新影院",
+        "description": "影院管理员提交影院信息以供审核。申请后影院会处于待审核(PENDING_APPROVAL)状态，需等待系统管理员审核。",
+        "operationId": "applyForCinema",
+        "requestBody": {
+          "description": "影院基本信息",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cinema"
+              },
+              "example": {
+                "name": "星光影院",
+                "address": "北京市海淀区中关村大街1号",
+                "phone": "010-12345678",
+                "logo": "https://example.com/logos/starlight.png",
+                "description": "位于市中心的现代化影院，拥有6个放映厅，提供舒适的观影体验。"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "权限不足，需要影院管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "成功创建影院申请",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                },
+                "example": {
+                  "id": 1,
+                  "name": "星光影院",
+                  "address": "北京市海淀区中关村大街1号",
+                  "phone": "010-12345678",
+                  "logo": "https://example.com/logos/starlight.png",
+                  "description": "位于市中心的现代化影院，拥有6个放映厅，提供舒适的观影体验。",
+                  "adminUserId": 10,
+                  "status": "PENDING_APPROVAL",
+                  "createTime": "2023-05-01T14:30:45",
+                  "updateTime": "2023-05-01T14:30:45"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误，例如必填字段缺失或信息不完整",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "影院名称不能为空",
+                  "code": 400
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户注册",
+        "description": "注册新用户账号。默认注册的用户角色为普通用户(USER)。用户名必须唯一，密码长度至少为6位。",
+        "operationId": "registerUser",
+        "requestBody": {
+          "description": "用户注册信息",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "example": {
+                "username": "newuser",
+                "password": "password123",
+                "nickname": "新用户",
+                "phone": "13800138000",
+                "email": "user@example.com"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                },
+                "example": {
+                  "message": "用户注册成功",
+                  "userId": 123,
+                  "username": "newuser"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "注册失败，例如用户名已存在或密码不符合要求",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "用户名已存在",
+                  "code": 400
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户登录",
+        "description": "使用用户名和密码登录，成功后获取JWT令牌。该令牌需要在后续请求的Authorization头中使用Bearer方案。",
+        "operationId": "loginUser",
+        "requestBody": {
+          "description": "用户登录信息",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "username": "user1",
+                "password": "password123"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功，返回JWT令牌",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                },
+                "example": {
+                  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTY1MTIzNDU2NywiZXhwIjoxNjUxMjM4MTY3fQ.abcdefghijklmnopqrstuvwxyz"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "登录失败，用户名或密码错误",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "用户名或密码错误",
+                  "code": 401
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/movies": {
+      "post": {
+        "tags": ["管理员 - 电影信息管理", "电影信息管理"],
+        "summary": "添加新电影",
+        "description": "添加电影基本信息并关联电影类型。一部电影至少需要关联一个类型，最多可关联三个类型。",
+        "operationId": "addMovie",
+        "requestBody": {
+          "description": "电影信息，必须包含电影基本信息和类型ID列表",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Movie"
+              },
+              "example": {
+                "title": "功夫",
+                "director": "周星驰",
+                "actors": "周星驰,元秋,元华,黄圣依",
+                "duration": 95,
+                "description": "1940年代的上海，小混混阿星（周星驰 饰）...",
+                "posterUrl": "https://example.com/posters/kungfu-hustle.jpg",
+                "releaseDate": "2004-12-23",
+                "country": "中国香港",
+                "status": "NOW_PLAYING",
+                "movieTypeIds": [1, 2]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功添加电影",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                },
+                "example": {
+                  "id": 1,
+                  "title": "功夫",
+                  "director": "周星驰",
+                  "actors": "周星驰,元秋,元华,黄圣依",
+                  "duration": 95,
+                  "description": "1940年代的上海，小混混阿星（周星驰 饰）...",
+                  "posterUrl": "https://example.com/posters/kungfu-hustle.jpg",
+                  "releaseDate": "2004-12-23",
+                  "country": "中国香港",
+                  "status": "NOW_PLAYING",
+                  "movieTypes": [
+                    {
+                      "id": 1,
+                      "name": "喜剧"
+                    },
+                    {
+                      "id": 2,
+                      "name": "动作"
+                    }
+                  ],
+                  "createTime": "2023-05-01T12:30:45"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误，例如电影类型数量不符合要求或缺少必要信息",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "电影至少需要关联一个类型",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/movie-types": {
+      "get": {
+        "tags": ["管理员 - 电影类型管理"],
+        "summary": "获取所有电影类型列表",
+        "description": "获取系统中定义的所有电影类型。",
+        "operationId": "getAllMovieTypes_1",
+        "responses": {
+          "200": {
+            "description": "成功获取类型列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "name": "喜剧",
+                    "tmdbGenreId": 35
+                  },
+                  {
+                    "id": 2,
+                    "name": "动作",
+                    "tmdbGenreId": 28
+                  },
+                  {
+                    "id": 3,
+                    "name": "剧情",
+                    "tmdbGenreId": 18
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["管理员 - 电影类型管理"],
+        "summary": "添加新电影类型",
+        "description": "添加一个新的电影类型，例如 '科幻'、'爱情' 等。类型名称需唯一。",
+        "operationId": "addMovieType",
+        "requestBody": {
+          "description": "电影类型信息，必须包含类型名称。tmdbGenreId 为可选，用于关联 TMDB 的类型 ID。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovieType"
+              },
+              "example": {
+                "name": "科幻",
+                "tmdbGenreId": 878
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "添加失败，例如类型名称已存在",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "电影类型名称已存在",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "添加成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                },
+                "example": {
+                  "id": 4,
+                  "name": "科幻",
+                  "tmdbGenreId": 878
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/data/populate-tmdb": {
+      "post": {
+        "tags": ["系统管理员 - 数据管理"],
+        "summary": "从TMDB导入电影数据",
+        "description": "从TMDB API导入电影、类型和演职员数据 (需要系统管理员权限)",
+        "operationId": "populateDataFromTmdb",
+        "parameters": [
+          {
+            "name": "maxMoviesPerCategory",
+            "in": "query",
+            "description": "每个类别（正在上映/即将上映/流行）最多导入的电影数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/announcements": {
+      "get": {
+        "tags": ["系统管理员 - 公告管理", "公告管理"],
+        "summary": "获取公告列表 (分页)",
+        "description": "获取所有公告列表，包括已发布和未发布的。可通过查询参数筛选只返回已发布或未发布的公告。",
+        "operationId": "listAnnouncementsForAdmin",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 10
+          },
+          {
+            "name": "isPublished",
+            "in": "query",
+            "description": "按发布状态筛选 (true: 已发布, false: 未发布)",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAnnouncement"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAnnouncement"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取公告列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": {
+                  "records": [
+                    {
+                      "id": 1,
+                      "title": "系统维护通知",
+                      "content": "系统将于2023年2月1日凌晨2点进行维护升级，预计2小时。",
+                      "publisherId": 1,
+                      "isPublished": true,
+                      "publishTime": "2023-01-30T15:00:00",
+                      "createTime": "2023-01-30T14:25:33",
+                      "updateTime": "2023-01-30T15:00:00"
+                    }
+                  ],
+                  "total": 1,
+                  "size": 10,
+                  "current": 1,
+                  "pages": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["系统管理员 - 公告管理", "公告管理"],
+        "summary": "添加新公告",
+        "description": "添加新的系统公告。新创建的公告默认为未发布状态，需要额外调用发布接口才能使其对普通用户可见。",
+        "operationId": "addAnnouncement",
+        "requestBody": {
+          "description": "公告信息，必须包含标题和内容。其他字段如发布状态会被系统自动设置。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Announcement"
+              },
+              "example": {
+                "title": "系统维护通知",
+                "content": "系统将于2023年2月1日凌晨2点进行维护升级，预计2小时。"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "成功创建公告",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                },
+                "example": {
+                  "id": 1,
+                  "title": "系统维护通知",
+                  "content": "系统将于2023年2月1日凌晨2点进行维护升级，预计2小时。",
+                  "publisherId": 1,
+                  "isPublished": false,
+                  "publishTime": null,
+                  "createTime": "2023-01-30T14:25:33",
+                  "updateTime": "2023-01-30T14:25:33"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/screenings": {
+      "get": {
+        "tags": ["场次管理", "用户 - 场次查询"],
+        "summary": "查询可用场次列表",
+        "description": "根据电影ID和日期查询已批准(APPROVED)且未结束的场次列表，包含影院和影厅名称。可选择指定影院进行筛选。此接口不需要登录。",
+        "operationId": "listAvailableScreenings",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 10
+          },
+          {
+            "name": "movieId",
+            "in": "query",
+            "description": "电影 ID (可选)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "cinemaId",
+            "in": "query",
+            "description": "影院 ID (可选)，不传则查询所有影院",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "查询日期 (格式: yyyy-MM-dd)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2025-01-30"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取可用场次列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误，例如日期格式不正确",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "日期参数不能为空",
+                  "code": 400
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/screenings/{screeningId}": {
+      "get": {
+        "tags": ["场次管理", "用户 - 场次查询"],
+        "summary": "获取单个场次详情",
+        "description": "获取指定场次的详细信息，用于用户选座页面展示。此接口通常不需要登录，除非业务要求。",
+        "operationId": "getScreeningDetails",
+        "parameters": [
+          {
+            "name": "screeningId",
+            "in": "path",
+            "description": "场次 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "场次不存在"
+          },
+          "200": {
+            "description": "成功获取场次详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningDetailVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/screenings/{screeningId}/seats": {
+      "get": {
+        "tags": ["用户 - 在线选座", "场次管理"],
+        "summary": "获取场次座位状态",
+        "description": "获取指定场次的座位布局以及每个座位的当前状态（可用、已售、已锁定）。",
+        "operationId": "getScreeningSeatStatus",
+        "parameters": [
+          {
+            "name": "screeningId",
+            "in": "path",
+            "description": "场次 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "场次状态不允许查看座位图"
+          },
+          "404": {
+            "description": "场次不存在或影厅信息无效"
+          },
+          "200": {
+            "description": "成功获取座位图",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profile/favorites": {
+      "get": {
+        "tags": ["用户 - 收藏与评分", "电影信息管理"],
+        "summary": "获取我的收藏列表",
+        "description": "分页获取当前用户收藏的电影列表。需要用户认证。",
+        "operationId": "getMyFavorites",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取收藏列表",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageMovie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payment/alipay/return": {
+      "get": {
+        "tags": ["支付宝支付相关接口"],
+        "summary": "支付宝同步返回",
+        "description": "处理支付宝页面跳转回商户网站的请求",
+        "operationId": "handleAlipayReturn",
+        "parameters": [
+          {
+            "name": "params",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/payment/alipay/query/{orderNo}": {
+      "get": {
+        "tags": ["支付宝支付相关接口"],
+        "summary": "查询订单支付状态",
+        "description": "根据订单号查询支付状态，用于前端轮询",
+        "operationId": "queryOrderPaymentStatus",
+        "parameters": [
+          {
+            "name": "orderNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orders/{identifier}": {
+      "get": {
+        "tags": ["订单管理", "用户 - 订单操作"],
+        "summary": "获取我的订单详情",
+        "description": "根据订单ID(数字)或订单号(字符串)获取当前用户的订单详情，包含电影、影院、场次、座位等详细信息。",
+        "operationId": "getMyOrderDetails",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "description": "订单ID (数字) 或订单号 (字符串)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取订单详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                },
+                "example": {
+                  "id": 1,
+                  "orderNo": "20240521103015001",
+                  "userId": 5,
+                  "screeningId": 1,
+                  "cinemaId": 1,
+                  "movieId": 1,
+                  "movieTitle": "功夫",
+                  "cinemaName": "星光影院",
+                  "roomName": "1号厅",
+                  "screeningTime": "2025-01-30T10:00:00",
+                  "totalPrice": 90,
+                  "status": "PAID",
+                  "createTime": "2024-05-21T10:30:15",
+                  "payTime": "2024-05-21T10:35:00",
+                  "orderSeats": [
+                    {
+                      "id": 1,
+                      "orderId": 1,
+                      "rowIndex": 5,
+                      "colIndex": 7,
+                      "seatLabel": "5排7座"
+                    },
+                    {
+                      "id": 2,
+                      "orderId": 1,
+                      "rowIndex": 5,
+                      "colIndex": 8,
+                      "seatLabel": "5排8座"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "订单不存在或不属于当前用户",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/movies": {
+      "get": {
+        "tags": ["用户 - 电影浏览", "电影信息管理"],
+        "summary": "获取电影列表 (分页)",
+        "description": "获取公开的电影列表，支持按标题和状态筛选。返回分页结果，包含电影基本信息和关联类型。",
+        "operationId": "listMovies",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 10
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "按电影标题模糊搜索",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "功夫"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "按电影状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["COMING_SOON", "NOW_PLAYING", "OFFLINE"]
+            },
+            "example": "NOW_PLAYING"
+          },
+          {
+            "name": "movieTypeId",
+            "in": "query",
+            "description": "按电影类型 ID 筛选",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取电影列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": {
+                  "records": [
+                    {
+                      "id": 1,
+                      "title": "功夫",
+                      "director": "周星驰",
+                      "actors": "周星驰,元秋,元华,黄圣依",
+                      "duration": 95,
+                      "posterUrl": "https://example.com/posters/kungfu-hustle.jpg",
+                      "releaseDate": "2004-12-23",
+                      "status": "NOW_PLAYING",
+                      "movieTypes": [
+                        {
+                          "id": 1,
+                          "name": "喜剧"
+                        },
+                        {
+                          "id": 2,
+                          "name": "动作"
+                        }
+                      ]
+                    }
+                  ],
+                  "total": 1,
+                  "size": 10,
+                  "current": 1,
+                  "pages": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/{movieId}/ratings": {
+      "get": {
+        "tags": ["用户 - 电影浏览", "电影信息管理"],
+        "summary": "获取电影的评分列表",
+        "description": "分页获取指定电影的所有评分和评论列表 (包含用户信息)。",
+        "operationId": "getMovieRatings",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取评分列表",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "电影不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRating"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/{movieId}/rating/my": {
+      "get": {
+        "tags": ["用户 - 收藏与评分", "电影信息管理"],
+        "summary": "获取我的评分",
+        "description": "获取当前用户对指定电影的评分信息。需要用户认证。",
+        "operationId": "getMyRating",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取评分信息",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户尚未对该电影评分",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/{movieId}/first-screening-date": {
+      "get": {
+        "tags": ["用户 - 电影浏览", "电影信息管理"],
+        "summary": "获取电影最早有效排期日期",
+        "description": "根据电影ID返回该电影未来最早有有效排期（状态为 APPROVED 且 start_time 在当前时间之后）的日期。",
+        "operationId": "getFirstAvailableScreeningDate",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功找到最早排期日期",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "date",
+                  "example": "2025-08-15"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "未找到该电影未来的有效排期",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/{movieId}/favorite/status": {
+      "get": {
+        "tags": ["用户 - 收藏与评分", "电影信息管理"],
+        "summary": "获取电影收藏状态",
+        "description": "检查当前用户是否收藏了指定电影。需要用户认证。",
+        "operationId": "getFavoriteStatus",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "返回收藏状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {
+                    "isFavorited": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/{id}": {
+      "get": {
+        "tags": ["用户 - 电影浏览", "电影信息管理"],
+        "summary": "获取电影详情",
+        "description": "根据ID获取单个电影的详细信息，包含所有基本信息和关联类型。",
+        "operationId": "getMovieById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "电影 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取电影详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                },
+                "example": {
+                  "id": 1,
+                  "title": "功夫",
+                  "director": "周星驰",
+                  "actors": "周星驰,元秋,元华,黄圣依",
+                  "duration": 95,
+                  "description": "1940年代的上海，小混混阿星（周星驰 饰）想要成为黑社会...",
+                  "posterUrl": "https://example.com/posters/kungfu-hustle.jpg",
+                  "releaseDate": "2004-12-23",
+                  "country": "中国香港",
+                  "status": "NOW_PLAYING",
+                  "trailerUrl": "https://example.com/trailers/kungfu-hustle.mp4",
+                  "tmdbId": 9470,
+                  "tmdbVoteAverage": 7.7,
+                  "tmdbVoteCount": 2345,
+                  "tmdbPopularity": 42.5,
+                  "totalBoxOffice": 17000000,
+                  "averageRating": 4.8,
+                  "createTime": "2023-05-01T12:30:45",
+                  "updateTime": "2023-05-01T12:30:45",
+                  "movieTypes": [
+                    {
+                      "id": 1,
+                      "name": "喜剧"
+                    },
+                    {
+                      "id": 2,
+                      "name": "动作"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "电影不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movies/rankings": {
+      "get": {
+        "tags": ["用户 - 电影浏览", "电影信息管理"],
+        "summary": "获取电影排行榜",
+        "description": "获取热映口碑榜或最受期待榜。type 参数指定榜单类型 ('hot' 或 'upcoming')，limit 参数指定返回数量 (默认 10)。",
+        "operationId": "getMovieRankings",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "排行榜类型: 'hot' (热映口碑榜) 或 'upcoming' (最受期待榜)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["hot", "upcoming"]
+            },
+            "example": "hot"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "返回的电影数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取排行榜",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误 (无效的 type)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "无效的排行榜类型: invalid_type",
+                  "code": 400
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movie-types": {
+      "get": {
+        "tags": ["电影类型"],
+        "summary": "获取所有电影类型列表",
+        "description": "获取系统中定义的所有电影类型，无需管理员权限。",
+        "operationId": "getAllMovieTypes",
+        "responses": {
+          "200": {
+            "description": "成功获取类型列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieType"
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "name": "喜剧",
+                    "tmdbGenreId": 35
+                  },
+                  {
+                    "id": 2,
+                    "name": "动作",
+                    "tmdbGenreId": 28
+                  },
+                  {
+                    "id": 3,
+                    "name": "剧情",
+                    "tmdbGenreId": 18
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cinemas": {
+      "get": {
+        "tags": ["用户 - 影院浏览", "影院信息管理"],
+        "summary": "获取已批准的影院列表 (分页)",
+        "description": "获取状态为APPROVED的影院列表，普通用户只能查看已批准的影院。支持按名称、地址和特色功能筛选。",
+        "operationId": "listApprovedCinemas",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 10
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "影院名称 (模糊匹配)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "星光"
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "description": "地址关键词 (模糊匹配)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "北京"
+          },
+          {
+            "name": "feature",
+            "in": "query",
+            "description": "特色功能 (模糊匹配，如IMAX, 杜比全景, 4D, 3D)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "IMAX"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取已批准的影院列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": {
+                  "records": [
+                    {
+                      "id": 1,
+                      "name": "星光影院",
+                      "address": "北京市海淀区中关村大街1号",
+                      "phone": "010-12345678",
+                      "logo": "https://example.com/logos/starlight.png",
+                      "description": "位于市中心的现代化影院，拥有6个放映厅，提供舒适的观影体验。",
+                      "status": "APPROVED"
+                    }
+                  ],
+                  "total": 1,
+                  "size": 10,
+                  "current": 1,
+                  "pages": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cinemas/{id}": {
+      "get": {
+        "tags": ["用户 - 影院浏览", "影院信息管理"],
+        "summary": "获取已批准的影院详情",
+        "description": "根据ID获取状态为APPROVED的影院详情，普通用户只能查看已批准的影院。",
+        "operationId": "getApprovedCinemaById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "影院 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取影院详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                },
+                "example": {
+                  "id": 1,
+                  "name": "星光影院",
+                  "address": "北京市海淀区中关村大街1号",
+                  "phone": "010-12345678",
+                  "logo": "https://example.com/logos/starlight.png",
+                  "description": "位于市中心的现代化影院，拥有6个放映厅，提供舒适的观影体验。",
+                  "status": "APPROVED",
+                  "createTime": "2023-05-01T14:30:45",
+                  "updateTime": "2023-05-02T10:15:23"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "影院不存在或未批准",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cinema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cinema-admin/screenings/{id}": {
+      "get": {
+        "tags": ["场次管理", "影院管理员 - 场次管理"],
+        "summary": "获取场次详情",
+        "description": "获取当前管理员所属影院的单个场次详情。",
+        "operationId": "getMyScreeningById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "场次 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取场次详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Screening"
+                },
+                "example": {
+                  "id": 1,
+                  "cinemaId": 1,
+                  "roomId": 1,
+                  "movieId": 1,
+                  "startTime": "2025-01-30T10:00:00",
+                  "endTime": "2025-01-30T12:00:00",
+                  "price": 45,
+                  "status": "APPROVED",
+                  "createTime": "2024-05-20T14:00:00",
+                  "updateTime": "2024-05-21T10:00:00"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足或无权查看该场次",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "场次不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["场次管理", "影院管理员 - 场次管理"],
+        "summary": "取消场次",
+        "description": "取消待审批(PENDING_APPROVAL)或未开始(APPROVED)的已批准场次。已开始或已结束的场次无法取消。",
+        "operationId": "cancelScreening",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要取消的场次 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "场次取消成功",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足或无权操作该场次",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "取消失败，例如场次状态不允许取消",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "场次已开始，无法取消",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "场次不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cinema-admin/orders": {
+      "get": {
+        "tags": ["影院管理员 - 订单管理", "订单管理"],
+        "summary": "获取本影院订单列表 (分页)",
+        "description": "影院管理员获取其管理的影院的订单列表，可按状态筛选。",
+        "operationId": "listCinemaOrdersForAdmin",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 10
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "按订单状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING_PAYMENT", "PAID", "CANCELLED", "REFUNDED", "COMPLETED"]
+            },
+            "example": "PAID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取订单列表 (返回包含 OrderVO 的分页对象)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足或未关联影院",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/cinema-admin/orders/{identifier}": {
+      "get": {
+        "tags": ["影院管理员 - 订单管理", "订单管理"],
+        "summary": "获取订单详情 (影院管理员)",
+        "description": "影院管理员根据订单ID(数字)或订单号(字符串)获取其影院的订单详情。",
+        "operationId": "getOrderDetailsForCinemaAdmin",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "description": "订单ID (数字) 或订单号 (字符串)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取订单详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderVO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足或无权查看该订单",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "订单不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/announcements": {
+      "get": {
+        "tags": ["用户 - 公告查看", "公告管理"],
+        "summary": "获取已发布的公告列表",
+        "description": "获取所有已发布的公告列表，按发布时间倒序排列。此接口不需要登录即可访问。",
+        "operationId": "listPublishedAnnouncements",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取已发布的公告列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": {
+                  "records": [
+                    {
+                      "id": 1,
+                      "title": "系统维护通知",
+                      "content": "系统将于2023年2月1日凌晨2点进行维护升级，预计2小时。",
+                      "publisherId": 1,
+                      "isPublished": true,
+                      "publishTime": "2023-01-30T15:00:00",
+                      "createTime": "2023-01-30T14:25:33",
+                      "updateTime": "2023-01-30T15:00:00"
+                    }
+                  ],
+                  "total": 1,
+                  "size": 10,
+                  "current": 1,
+                  "pages": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": ["系统管理员 - 用户管理"],
+        "summary": "获取用户列表 (分页)",
+        "description": "获取系统用户列表，可按用户名或角色筛选。返回分页结果，包含用户基本信息（不含密码）。",
+        "operationId": "listUsers",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 10
+          },
+          {
+            "name": "username",
+            "in": "query",
+            "description": "按用户名模糊搜索，支持部分匹配",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "admin"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "按角色筛选 (USER: 普通用户, CINEMA_ADMIN: 影院管理员, SYSTEM_ADMIN: 系统管理员)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["USER", "CINEMA_ADMIN", "SYSTEM_ADMIN"]
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "未授权，请先登录",
+                  "code": 401
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "权限不足，需要系统管理员权限",
+                  "code": 403
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取用户列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "examples": {
+                  "用户列表示例": {
+                    "description": "用户列表示例",
+                    "value": {
+                      "records": [
+                        {
+                          "id": 1,
+                          "username": "admin",
+                          "nickname": "系统管理员",
+                          "phone": "13800000000",
+                          "email": "admin@example.com",
+                          "role": "SYSTEM_ADMIN",
+                          "createTime": "2023-01-01T12:00:00"
+                        }
+                      ],
+                      "total": 1,
+                      "size": 10,
+                      "current": 1,
+                      "pages": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats/summary": {
+      "get": {
+        "tags": ["管理员 - 统计信息"],
+        "summary": "获取汇总统计信息",
+        "description": "获取仪表盘顶部指标卡片的汇总数据。",
+        "operationId": "getSummaryStatistics",
+        "responses": {
+          "200": {
+            "description": "成功获取汇总统计",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryStatsDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats/order-trend": {
+      "get": {
+        "tags": ["管理员 - 统计信息"],
+        "summary": "获取订单趋势",
+        "description": "获取指定天数内的每日订单数量趋势图数据。",
+        "operationId": "getOrderTrend",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "description": "查询的天数 (例如 7 或 30)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 7
+            },
+            "example": 7
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取订单趋势数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChartDataPointDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats/movie-box-office": {
+      "get": {
+        "tags": ["管理员 - 统计信息"],
+        "summary": "获取电影票房排行",
+        "description": "获取票房收入排名前 N 的电影及其票房数据，用于饼图或条形图展示。",
+        "operationId": "getTopMovieBoxOffice",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "要获取的电影数量 (例如 5 或 10)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            },
+            "example": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取电影票房排行数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChartDataPointDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats/cinema-status-distribution": {
+      "get": {
+        "tags": ["管理员 - 统计信息"],
+        "summary": "获取影院状态分布",
+        "description": "获取不同状态（待审核、已批准等）的影院数量分布数据，用于饼图展示。",
+        "operationId": "getCinemaStatusDistribution",
+        "responses": {
+          "200": {
+            "description": "成功获取影院状态分布数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatusDistributionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/screenings": {
+      "get": {
+        "tags": ["场次管理", "系统管理员 - 场次管理"],
+        "summary": "获取场次列表 (分页)",
+        "description": "系统管理员获取所有场次列表，可按影院、电影、日期、状态筛选。",
+        "operationId": "listScreeningsForAdmin",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 10
+          },
+          {
+            "name": "cinemaId",
+            "in": "query",
+            "description": "按影院 ID 筛选",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "movieId",
+            "in": "query",
+            "description": "按电影 ID 筛选",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "按日期筛选 (格式: yyyy-MM-dd)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2025-01-30"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "按状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED", "FINISHED", "CANCELLED"]
+            },
+            "example": "PENDING_APPROVAL"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageScreeningDetailVO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取场次列表 (包含影院、影厅、电影名称)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageScreeningDetailVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/orders": {
+      "get": {
+        "tags": ["订单管理", "系统管理员 - 订单管理"],
+        "summary": "获取所有订单列表 (分页)",
+        "description": "系统管理员获取所有订单列表，可按用户、影院、状态筛选。",
+        "operationId": "listAllOrdersForAdmin",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": 10
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "按用户 ID 筛选",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 5
+          },
+          {
+            "name": "cinemaId",
+            "in": "query",
+            "description": "按影院 ID 筛选",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "按订单状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING_PAYMENT", "PAID", "CANCELLED", "REFUNDED", "COMPLETED"]
+            },
+            "example": "PENDING_PAYMENT"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOrder"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOrder"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取订单列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/admin/orders/{identifier}": {
+      "get": {
+        "tags": ["订单管理", "系统管理员 - 订单管理"],
+        "summary": "获取订单详情 (管理员)",
+        "description": "系统管理员根据订单ID(数字)或订单号(字符串)获取订单详情。",
+        "operationId": "getOrderDetailsForAdmin",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "description": "订单ID (数字) 或订单号 (字符串)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功获取订单详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "订单不存在",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/admin/cinemas": {
+      "get": {
+        "tags": ["系统管理员 - 影院管理", "影院信息管理"],
+        "summary": "获取影院列表 (分页)",
+        "description": "获取所有影院列表，可按状态筛选。系统管理员可以查看任何状态的影院。",
+        "operationId": "listCinemasForAdmin",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "description": "当前页码",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "example": 10
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "按影院状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED", "DISABLED"]
+            },
+            "example": "PENDING_APPROVAL"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取影院列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": {
+                  "records": [
+                    {
+                      "id": 1,
+                      "name": "星光影院",
+                      "address": "北京市海淀区中关村大街1号",
+                      "adminUserId": 10,
+                      "status": "APPROVED",
+                      "createTime": "2023-05-01T14:30:45"
+                    },
+                    {
+                      "id": 2,
+                      "name": "环球影城",
+                      "address": "上海市浦东新区陆家嘴环路1000号",
+                      "adminUserId": 11,
+                      "status": "PENDING_APPROVAL",
+                      "createTime": "2023-05-10T09:20:33"
+                    }
+                  ],
+                  "total": 2,
+                  "size": 10,
+                  "current": 1,
+                  "pages": 1
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权，需要登录",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCinema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足，需要系统管理员权限",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCinema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/screenings/{screeningId}/unlock-seats": {
+      "delete": {
+        "tags": ["用户 - 在线选座", "场次管理"],
+        "summary": "解锁座位",
+        "description": "尝试为当前用户解锁先前锁定的指定场次的座位。",
+        "operationId": "unlockSeats",
+        "parameters": [
+          {
+            "name": "screeningId",
+            "in": "path",
+            "description": "场次 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "需要解锁的座位列表",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlockSeatsRequest"
+              },
+              "example": {
+                "seatsToUnlock": [
+                  {
+                    "rowIndex": 5,
+                    "colIndex": 6
+                  },
+                  {
+                    "rowIndex": 5,
+                    "colIndex": 7
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "请求无效（如未提供座位列表）"
+          },
+          "404": {
+            "description": "场次不存在或未找到要解锁的座位记录 (对于该用户)"
+          },
+          "401": {
+            "description": "用户未登录"
+          },
+          "204": {
+            "description": "座位解锁成功"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateProfileRequestDTO": {
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "新的昵称",
+            "example": "明明"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "新的头像 URL",
+            "example": "/avatars/new_avatar.png"
+          },
+          "phone": {
+            "pattern": "^1[3-9]\\d{9}$",
+            "type": "string",
+            "description": "新的手机号码",
+            "example": "13900139000"
+          },
+          "email": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "新的电子邮箱",
+            "example": "new.email@example.com"
+          }
+        },
+        "description": "包含要更新的字段（昵称、头像、手机、邮箱）"
+      },
+      "UserProfileDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户 ID",
+            "format": "int64",
+            "example": 5
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名 (登录账号)",
+            "example": "user123"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "昵称",
+            "example": "小明"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像 URL",
+            "example": "/avatars/default.png"
+          },
+          "phone": {
+            "type": "string",
+            "description": "手机号码",
+            "example": "13800138000"
+          },
+          "email": {
+            "type": "string",
+            "description": "电子邮箱",
+            "example": "user@example.com"
+          },
+          "role": {
+            "type": "string",
+            "description": "用户角色",
+            "example": "USER",
+            "enum": ["USER", "CINEMA_ADMIN", "SYSTEM_ADMIN"]
+          },
+          "createTime": {
+            "type": "string",
+            "description": "账号创建时间",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "description": "最后更新时间",
+            "format": "date-time"
+          }
+        },
+        "description": "用户个人资料信息 (安全)"
+      },
+      "ChangePasswordRequestDTO": {
+        "required": ["confirmPassword", "currentPassword", "newPassword"],
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "当前使用的密码",
+            "example": "oldPassword123"
+          },
+          "newPassword": {
+            "maxLength": 100,
+            "minLength": 6,
+            "type": "string",
+            "description": "设置的新密码 (长度6-100)",
+            "example": "newPassword456"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "description": "确认新密码",
+            "example": "newPassword456"
+          }
+        },
+        "description": "包含当前密码、新密码和确认密码"
+      },
+      "Movie": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "director": {
+            "type": "string"
+          },
+          "actors": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          },
+          "posterUrl": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "country": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["COMING_SOON", "NOW_PLAYING", "OFFLINE"]
+          },
+          "trailerUrl": {
+            "type": "string"
+          },
+          "tmdbId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tmdbVoteAverage": {
+            "type": "number",
+            "format": "double"
+          },
+          "tmdbVoteCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tmdbPopularity": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalBoxOffice": {
+            "type": "number"
+          },
+          "averageRating": {
+            "type": "number",
+            "format": "double"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "movieTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "movieTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovieType"
+            }
+          }
+        }
+      },
+      "MovieType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tmdbGenreId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orderNo": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "screeningId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cinemaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movieId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "seatCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_PAYMENT", "PAID", "CANCELLED", "REFUNDED", "COMPLETED"]
+          },
+          "paymentTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderSeat"
+            }
+          },
+          "screening": {
+            "$ref": "#/components/schemas/Screening"
+          },
+          "movie": {
+            "$ref": "#/components/schemas/Movie"
+          },
+          "alipayTradeNo": {
+            "type": "string"
+          },
+          "frontendCallbackUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderSeat": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orderId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "screeningId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rowIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "colIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seatLabel": {
+            "type": "string"
+          }
+        }
+      },
+      "Screening": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movieId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roomId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cinemaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "price": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED", "FINISHED", "CANCELLED"]
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cinemaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "seatTemplate": {
+            "type": "string"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cols": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Cinema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "logo": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "adminUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED", "DISABLED"]
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["USER", "CINEMA_ADMIN", "SYSTEM_ADMIN"]
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ScreeningReviewRequest": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CinemaStatusUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED", "DISABLED"]
+          }
+        }
+      },
+      "CinemaReviewRequest": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean"
+          },
+          "adminUserId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "Announcement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "publisherId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "publishTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PublishRequest": {
+        "required": ["publish"],
+        "type": "object",
+        "properties": {
+          "publish": {
+            "type": "boolean",
+            "description": "是否发布"
+          }
+        }
+      },
+      "LockSeatsRequest": {
+        "required": ["seatsToLock"],
+        "type": "object",
+        "properties": {
+          "seatsToLock": {
+            "type": "array",
+            "description": "需要锁定的座位标识符列表",
+            "items": {
+              "$ref": "#/components/schemas/SeatIdentifier"
+            }
+          }
+        },
+        "description": "锁定座位请求"
+      },
+      "SeatIdentifier": {
+        "required": ["colIndex", "rowIndex"],
+        "type": "object",
+        "properties": {
+          "rowIndex": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "座位行号 (从1开始)",
+            "format": "int32",
+            "example": 5
+          },
+          "colIndex": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "座位列号 (从1开始)",
+            "format": "int32",
+            "example": 8
+          }
+        },
+        "description": "座位标识符，包含行号和列号"
+      },
+      "SeatLock": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "screeningId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rowIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "colIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lockExpiryTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateOrderRequest": {
+        "required": ["screeningId", "selectedSeats"],
+        "type": "object",
+        "properties": {
+          "screeningId": {
+            "type": "integer",
+            "description": "场次 ID",
+            "format": "int64",
+            "example": 1
+          },
+          "selectedSeats": {
+            "type": "array",
+            "description": "选择的座位列表",
+            "items": {
+              "$ref": "#/components/schemas/SeatInfo"
+            }
+          }
+        }
+      },
+      "SeatInfo": {
+        "required": ["colIndex", "rowIndex"],
+        "type": "object",
+        "properties": {
+          "rowIndex": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "座位行号 (从1开始)",
+            "format": "int32",
+            "example": 3
+          },
+          "colIndex": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "座位列号 (从1开始)",
+            "format": "int32",
+            "example": 5
+          }
+        },
+        "description": "座位信息"
+      },
+      "OrderVO": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "description": "订单ID",
+            "format": "int64"
+          },
+          "orderNo": {
+            "type": "string",
+            "description": "订单号"
+          },
+          "userId": {
+            "type": "integer",
+            "description": "用户ID",
+            "format": "int64"
+          },
+          "screeningId": {
+            "type": "integer",
+            "description": "场次ID",
+            "format": "int64"
+          },
+          "movieId": {
+            "type": "integer",
+            "description": "电影ID",
+            "format": "int64"
+          },
+          "movieTitle": {
+            "type": "string",
+            "description": "电影标题"
+          },
+          "cinemaId": {
+            "type": "integer",
+            "description": "影院ID",
+            "format": "int64"
+          },
+          "cinemaName": {
+            "type": "string",
+            "description": "影院名称"
+          },
+          "roomName": {
+            "type": "string",
+            "description": "影厅名称"
+          },
+          "screeningStartTime": {
+            "type": "string",
+            "description": "放映开始时间",
+            "format": "date-time"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "总金额"
+          },
+          "seatCount": {
+            "type": "integer",
+            "description": "座位数量",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "订单状态",
+            "enum": ["PENDING_PAYMENT", "PAID", "CANCELLED", "REFUNDED", "COMPLETED"]
+          },
+          "paymentTime": {
+            "type": "string",
+            "description": "支付时间",
+            "format": "date-time"
+          },
+          "cancelTime": {
+            "type": "string",
+            "description": "取消时间",
+            "format": "date-time"
+          },
+          "createTime": {
+            "type": "string",
+            "description": "订单创建时间",
+            "format": "date-time"
+          },
+          "seatsDescription": {
+            "type": "array",
+            "description": "座位描述列表 (例如: ['5排7座', '5排8座'])",
+            "items": {
+              "type": "string",
+              "description": "座位描述列表 (例如: ['5排7座', '5排8座'])"
+            }
+          }
+        },
+        "description": "订单详情视图对象"
+      },
+      "RatingRequestDTO": {
+        "required": ["score"],
+        "type": "object",
+        "properties": {
+          "score": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "type": "string"
+          }
+        }
+      },
+      "Rating": {
+        "required": ["movieId", "score", "userId"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movieId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "score": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "CinemaPartnershipApplicationRequestDTO": {
+        "required": ["address", "name"],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "影院名称",
+            "example": "未来影城"
+          },
+          "address": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "影院地址",
+            "example": "上海市浦东新区世纪大道100号"
+          },
+          "phone": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "联系电话",
+            "example": "021-88888888"
+          },
+          "logo": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Logo 图片 URL",
+            "example": "https://example.com/logos/future-cinema.png"
+          },
+          "description": {
+            "type": "string",
+            "description": "影院介绍"
+          }
+        },
+        "description": "影院合作入驻申请请求体"
+      },
+      "ScreeningRequest": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roomId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "required": ["password", "username"],
+        "type": "object",
+        "properties": {
+          "username": {
+            "maxLength": 50,
+            "minLength": 3,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 100,
+            "minLength": 6,
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "phone": {
+            "pattern": "^1[3-9]\\d{9}$",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["USER", "CINEMA_ADMIN", "SYSTEM_ADMIN"]
+          }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "提示信息",
+            "example": "用户注册成功"
+          },
+          "userId": {
+            "type": "integer",
+            "description": "用户ID",
+            "format": "int64",
+            "example": 123
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "newuser"
+          }
+        },
+        "description": "注册成功响应体"
+      },
+      "LoginRequest": {
+        "required": ["password", "username"],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT令牌",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "description": "登录成功响应体"
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "asc": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageObject"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageObject"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageObject": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageObject"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageObject"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ScreeningDetailVO": {
+        "type": "object",
+        "properties": {
+          "screeningId": {
+            "type": "integer",
+            "description": "场次 ID",
+            "format": "int64",
+            "example": 1
+          },
+          "movieId": {
+            "type": "integer",
+            "description": "电影 ID",
+            "format": "int64",
+            "example": 101
+          },
+          "movieTitle": {
+            "type": "string",
+            "description": "电影标题",
+            "example": "挑战者号"
+          },
+          "moviePosterUrl": {
+            "type": "string",
+            "description": "电影海报 URL",
+            "example": "/images/posters/challenger.jpg"
+          },
+          "movieDuration": {
+            "type": "integer",
+            "description": "(可选) 电影时长 (分钟)",
+            "format": "int32",
+            "example": 131
+          },
+          "cinemaId": {
+            "type": "integer",
+            "description": "影院 ID",
+            "format": "int64",
+            "example": 5
+          },
+          "cinemaName": {
+            "type": "string",
+            "description": "影院名称",
+            "example": "星光国际影城"
+          },
+          "roomId": {
+            "type": "integer",
+            "description": "影厅 ID",
+            "format": "int64",
+            "example": 12
+          },
+          "roomName": {
+            "type": "string",
+            "description": "影厅名称",
+            "example": "IMAX 厅"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "放映开始时间",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "放映结束时间",
+            "format": "date-time"
+          },
+          "price": {
+            "type": "number",
+            "description": "票价",
+            "example": 55
+          },
+          "status": {
+            "type": "string",
+            "description": "场次状态",
+            "example": "APPROVED",
+            "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED", "FINISHED", "CANCELLED"]
+          },
+          "roomRowsCount": {
+            "type": "integer",
+            "description": "(可选) 影厅行数",
+            "format": "int32",
+            "example": 10
+          },
+          "roomColsCount": {
+            "type": "integer",
+            "description": "(可选) 影厅列数",
+            "format": "int32",
+            "example": 20
+          }
+        },
+        "description": "场次详情视图对象，包含电影、影院、影厅的详细信息"
+      },
+      "PageMovie": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Movie"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageMovie"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageMovie"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageRating": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rating"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageRating"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageRating"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SummaryStatsDTO": {
+        "type": "object",
+        "properties": {
+          "totalUsers": {
+            "type": "integer",
+            "description": "总用户数",
+            "format": "int64"
+          },
+          "totalCinemas": {
+            "type": "integer",
+            "description": "影院总数",
+            "format": "int64"
+          },
+          "approvedCinemas": {
+            "type": "integer",
+            "description": "已批准影院数",
+            "format": "int64"
+          },
+          "pendingCinemas": {
+            "type": "integer",
+            "description": "待审核影院数",
+            "format": "int64"
+          },
+          "totalMovies": {
+            "type": "integer",
+            "description": "电影总数",
+            "format": "int64"
+          },
+          "totalOrders": {
+            "type": "integer",
+            "description": "订单总数",
+            "format": "int64"
+          },
+          "totalRevenue": {
+            "type": "number",
+            "description": "总销售额 (仅计算已支付订单)"
+          }
+        },
+        "description": "管理员仪表盘汇总统计信息 DTO"
+      },
+      "ChartDataPointDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "数据点的名称或标签 (例如日期 'YYYY-MM-DD' 或电影标题)"
+          },
+          "value": {
+            "type": "number",
+            "description": "数据点的值 (例如订单数量或销售额)"
+          }
+        },
+        "description": "通用图表数据点 DTO (名称/标签 和 值)"
+      },
+      "StatusDistributionDTO": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "状态名称 (如 'APPROVED', 'PENDING_APPROVAL')"
+          },
+          "count": {
+            "type": "integer",
+            "description": "该状态下的数量",
+            "format": "int64"
+          }
+        },
+        "description": "状态分布数据点 DTO"
+      },
+      "PageScreeningDetailVO": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScreeningDetailVO"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageScreeningDetailVO"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageScreeningDetailVO"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageOrder": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageOrder"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageOrder"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageCinema": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cinema"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageCinema"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageCinema"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageAnnouncement": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Announcement"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orders": {
+            "type": "array",
+            "writeOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "optimizeCountSql": {
+            "$ref": "#/components/schemas/PageAnnouncement"
+          },
+          "searchCount": {
+            "$ref": "#/components/schemas/PageAnnouncement"
+          },
+          "optimizeJoinOfCountSql": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "maxLimit": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "countId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UnlockSeatsRequest": {
+        "required": ["seatsToUnlock"],
+        "type": "object",
+        "properties": {
+          "seatsToUnlock": {
+            "type": "array",
+            "description": "需要解锁的座位标识符列表",
+            "items": {
+              "$ref": "#/components/schemas/SeatIdentifier"
+            }
+          }
+        },
+        "description": "解锁座位请求"
+      }
+    },
+    "securitySchemes": {
+      "JWT": {
+        "type": "http",
+        "description": "JWT Authorization 头部。格式: Bearer {token}",
+        "in": "header",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
