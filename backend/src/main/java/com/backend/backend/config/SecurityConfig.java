@@ -1,10 +1,13 @@
 package com.backend.backend.config;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,9 +20,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import static org.springframework.security.config.Customizer.withDefaults;
-
-import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -46,7 +46,10 @@ public class SecurityConfig {
             // 0. 配置 CORS (允许跨域请求)
             .cors(withDefaults()) // 使用下面的 corsConfigurationSource Bean
             // 1. 禁用 CSRF (因为我们使用 JWT, CSRF 保护不是必需的)
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                // 忽略支付宝回调接口的CSRF保护
+                .ignoringRequestMatchers("/api/payment/alipay/notify", "/api/payment/alipay/return")
+                .disable())
             // 2. 配置 Session 管理策略为无状态 (不创建 Session)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 3. 配置授权规则
@@ -55,6 +58,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/cinemas/**", "/api/screenings/**", "/api/announcements").permitAll()
+                // 支付宝回调接口（允许匿名访问）
+                .requestMatchers("/api/payment/alipay/notify", "/api/payment/alipay/return").permitAll()
                 // 管理员接口 (需要 SYSTEM_ADMIN 角色)
                 .requestMatchers("/api/admin/**").hasRole("SYSTEM_ADMIN")
                 // 影院管理员接口 (需要 CINEMA_ADMIN 角色)

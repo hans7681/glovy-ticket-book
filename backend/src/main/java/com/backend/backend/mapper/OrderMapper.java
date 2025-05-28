@@ -4,12 +4,16 @@ import com.backend.backend.entity.Order;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 订单数据访问接口
+ */
 @Mapper
 public interface OrderMapper extends BaseMapper<Order> {
     // BaseMapper 提供基础 CRUD
@@ -60,4 +64,13 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return 更新的行数。
      */
     int batchCancelOrders(@Param("orderIds") List<Long> orderIds, @Param("cancelTime") LocalDateTime cancelTime);
+
+    /**
+     * 根据订单号查询订单
+     * 
+     * @param orderNo 订单号
+     * @return 订单信息
+     */
+    @Select("SELECT * FROM t_order WHERE order_no = #{orderNo}")
+    Order selectByOrderNo(@Param("orderNo") String orderNo);
 } 

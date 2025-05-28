@@ -1,61 +1,49 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-### General Build/Dependency ###
-node_modules/
-build/
-dist/
-*.class
-*.jar
-*.war
-*.exe
-
-### Python ###
-venv/
-__pycache__/
-
-### Go ###
-vendor/
-
-### Logs ###
+# General ignores
+.cursor/
 *.log
-
-### Environment Variables ###
-.env
-.env.*
-!/.env.example
-
-### OS Generated Files ###
+.idea/
+.vscode/
+*.swp
+*~
 .DS_Store
-Thumbs.db
+
+# Root level specific ignores (assuming these might exist at root, or for safety)
+/项目文档.md
+/项目需求.md
+/数据库设计.md
+/swagger3.json
+/项目进度.md
+/接口API文档.json
+
+# Backend specific ignores (relative to root)
+/backend/.cursor/
+/backend/target/
+/backend/项目文档.md
+/backend/项目需求.md
+/backend/swagger3.json
+/backend/数据库设计.md
+/backend/接口API文档.json
+/backend/.mvn/
+/backend/mvnw
+/backend/mvnw.cmd
+# /backend/HELP.md # Uncomment if you want to ignore HELP.md
+
+# Frontend specific ignores (relative to root)
+/frontend/.cursor/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/项目进度.md
+/frontend/项目需求.md
+/frontend/数据库设计.md
+/frontend/接口API文档.json
+/frontend/Vite App.html
+# /frontend/package-lock.json # Uncomment if you specifically want to ignore package-lock.json (generally not recommended)
+
+# Environment files
+.env*
+!.env.example
+
+# Other specific ignores
+*.rar
+ask/
+specstory/ 
