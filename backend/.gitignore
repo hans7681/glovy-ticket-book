@@ -6,6 +6,7 @@
 *.swp
 *~
 .DS_Store
+*.md
 
 # Root level specific ignores (assuming these might exist at root, or for safety)
 /项目文档.md
