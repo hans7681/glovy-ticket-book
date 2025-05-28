@@ -91,6 +91,7 @@ const handleLogout = async () => {
         <el-menu-item index="/">首页</el-menu-item>
         <el-menu-item index="/movies">电影</el-menu-item>
         <el-menu-item index="/cinemas">影院</el-menu-item>
+        <el-menu-item index="/announcements">公告</el-menu-item>
 
         <!-- Role-based Admin Links -->
         <el-menu-item v-if="isLoggedIn && userRole === 'SYSTEM_ADMIN'" index="/admin">

@@ -371,7 +371,8 @@ const handleSizeChange = (newSize: number) => {
   fetchScreenings()
 }
 
-const handleCurrentChange = () => {
+const handleCurrentChange = (newPage: number) => {
+  pagination.currentPage = newPage
   fetchScreenings()
 }
 

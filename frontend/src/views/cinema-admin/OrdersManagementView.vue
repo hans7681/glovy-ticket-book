@@ -264,13 +264,13 @@ const handleResetFilters = () => {
   handleFilter() // Fetch orders with reset filters
 }
 
-const handleSizeChange = () => {
-  // pagination.pageSize = newSize; // v-model handles this
+const handleSizeChange = (newSize: number) => {
+  pagination.pageSize = newSize
   fetchOrders() // Fetch data when page size changes
 }
 
-const handleCurrentChange = () => {
-  // pagination.currentPage = newPage; // v-model handles this
+const handleCurrentChange = (newPage: number) => {
+  pagination.currentPage = newPage
   fetchOrders() // Fetch data when page number changes
 }
 

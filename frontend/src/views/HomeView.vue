@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchMovies } from '../services/api' // Adjusted import path
 import type { Movie } from '../types/movie' // Adjusted import path
+import { useAuthStore } from '@/stores/auth'
+
+// 获取认证状态
+const authStore = useAuthStore()
+const isLoggedIn = computed(() => authStore.isLoggedIn)
 
 const popularMovies = ref<Movie[]>([])
 const upcomingMovies = ref<Movie[]>([])
@@ -86,7 +91,10 @@ onMounted(() => {
         <p>最新、最热门的电影尽在这里</p>
         <div class="hero-buttons">
           <RouterLink to="/movies" class="btn btn-primary">浏览电影</RouterLink>
-          <RouterLink to="/register" class="btn btn-secondary">注册账号</RouterLink>
+          <RouterLink v-if="!isLoggedIn" to="/register" class="btn btn-secondary"
+            >注册账号</RouterLink
+          >
+          <RouterLink v-else to="/cinemas" class="btn btn-secondary">浏览影院</RouterLink>
         </div>
       </div>
     </section>

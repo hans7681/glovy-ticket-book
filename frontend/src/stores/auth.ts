@@ -93,7 +93,18 @@ export const useAuthStore = defineStore('auth', () => {
   // Call initializeAuth when the store is created
   initializeAuth()
 
-  const isLoggedIn = computed(() => !!token.value && !!user.value) // Make isLoggedIn depend on user too
+  // Modify isLoggedIn to primarily depend on the presence and validity of the token
+  const isLoggedIn = computed(() => {
+    if (!token.value) return false
+    try {
+      const decoded = jwtDecode<JwtPayload>(token.value)
+      const isExpired = decoded.exp ? decoded.exp * 1000 < Date.now() : false
+      return !isExpired // Logged in if token exists and is not expired
+    } catch (error) {
+      console.error('Failed to decode token for isLoggedIn check:', error)
+      return false // Treat as logged out if token is invalid
+    }
+  })
 
   // 保存 token 和 user 到 localStorage
   function setAuthData(newToken: string | null, userData: User | null) {

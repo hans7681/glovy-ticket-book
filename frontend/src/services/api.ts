@@ -294,10 +294,19 @@ export const listMyOrders = (params?: {
 }
 
 // === ANNOUNCEMENTS ===
-// ... listPublishedAnnouncements ...
+/**
+ * 获取已发布的公告列表（公开API）
+ * @param params 分页参数
+ * @returns 已发布的公告列表
+ */
+export const listPublishedAnnouncements = (params?: {
+  current?: number
+  size?: number
+}): Promise<AxiosResponse<Page<Announcement>>> => {
+  return apiClient.get<Page<Announcement>>('/announcements', { params })
+}
 
 // === ADMIN APIs (Example Structure) ===
-// ... admin related functions ...
 
 // === CINEMA ADMIN APIs (Example Structure) ===
 
@@ -835,5 +844,47 @@ export const submitCinemaApplication = (
 ): Promise<AxiosResponse<Cinema>> => {
   return apiClient.post<Cinema>('/cinemas/partnership-application', data)
 }
+
+// --- Payment APIs ---
+
+/**
+ * 创建支付宝支付订单
+ * @param orderNo 订单号
+ * @param frontendUrl 前端应用的基础URL，用于支付完成后的重定向
+ * @returns 支付宝表单HTML字符串
+ */
+export const createAlipayPayment = (
+  orderNo: string,
+  frontendUrl?: string,
+): Promise<AxiosResponse<string>> => {
+  const params = frontendUrl ? { frontendUrl } : undefined
+  return apiClient.post<string>(`/payment/alipay/create/${orderNo}`, null, {
+    responseType: 'text',
+    params,
+  })
+}
+
+/**
+ * 定义查询支付状态接口的响应类型
+ */
+export interface AlipayQueryResponse {
+  orderNo: string
+  tradeStatus?: string // 支付宝交易状态 (e.g., TRADE_SUCCESS, WAIT_BUYER_PAY)
+  isPaid: boolean // 后端确认的支付状态
+  paymentTime?: string // 支付时间 (ISO 8601)
+}
+
+/**
+ * 查询支付宝订单支付状态
+ * @param orderNo 订单号
+ * @returns 支付状态信息
+ */
+export const queryAlipayPaymentStatus = (
+  orderNo: string,
+): Promise<AxiosResponse<AlipayQueryResponse>> => {
+  return apiClient.get<AlipayQueryResponse>(`/payment/alipay/query/${orderNo}`)
+}
+
+// --- End Payment APIs ---
 
 export default apiClient

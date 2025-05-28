@@ -176,7 +176,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getOrderDetails, cancelOrder, getScreeningDetails, markOrderAsPaid } from '@/services/api'
+import {
+  getOrderDetails,
+  cancelOrder,
+  getScreeningDetails,
+  createAlipayPayment,
+  queryAlipayPaymentStatus,
+} from '@/services/api'
 import { ElMessage, ElMessageBox, ElDialog, ElButton, ElIcon } from 'element-plus'
 import { Ticket } from '@element-plus/icons-vue'
 import QrcodeVue from 'qrcode.vue'
@@ -214,6 +220,13 @@ const countdownStopFn = ref<(() => void) | null>(null)
 const showTicketDialog = ref(false)
 const ticketQrCodeValue = ref('')
 // --- End Ticket Dialog State ---
+
+// 支付状态查询相关变量
+const paymentPollingInterval = ref<number | null>(null)
+const isCheckingPayment = ref(false)
+const pollCount = ref(0)
+const MAX_POLL_COUNT = 60 // 最多轮询60次 (约10分钟)
+const POLL_INTERVAL = 1000 // 每1秒查询一次
 
 // 订单状态文本映射
 const getStatusText = (status: string): string => {
@@ -329,23 +342,132 @@ const handlePayment = async () => {
   if (!order.value || isExpired.value) return
   isPaying.value = true
   try {
-    // TODO: Implement actual payment logic here
-    // Example: Simulate payment success after 2 seconds
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    // Simulate marking order as paid (replace with actual API call if needed)
-    // Or better: Redirect to a payment gateway, and have a webhook update the order status
-    // For now, just simulate and refresh
-    ElMessage.success('支付成功！正在更新订单状态...')
-    await markOrderAsPaid(order.value.orderNo) // Assuming an API exists to mark as paid locally for demo
-    await fetchOrderDetails() // Refresh details
+    // 获取当前前端应用的基础URL
+    const frontendUrl = window.location.origin // 例如 http://localhost:5173
+
+    // 调用支付宝支付创建接口，传递前端URL
+    const response = await createAlipayPayment(order.value.orderNo, frontendUrl)
+
+    // 处理返回的HTML表单
+    if (response.status === 200 && response.data) {
+      const formHtml = response.data
+      // 创建一个临时div元素用于执行表单提交
+      const div = document.createElement('div')
+      div.innerHTML = formHtml
+      document.body.appendChild(div)
+
+      // 尝试查找表单并提交
+      const form = div.querySelector('form')
+      if (form) {
+        // 启动支付状态轮询
+        startPaymentStatusPolling(order.value.orderNo)
+        // 提交表单跳转到支付页面
+        form.submit()
+      } else {
+        // 如果没有找到表单，可能是后端响应结构有问题
+        ElMessage.error('无法跳转到支付页面，请稍后重试')
+        document.body.removeChild(div) // 清理元素
+      }
+    } else {
+      ElMessage.error('创建支付请求失败，请稍后重试')
+    }
   } catch (err) {
     console.error('支付处理失败:', err)
-    ElMessage.error('支付失败，请稍后再试。')
+    let errorMessage = '支付请求失败，请稍后重试'
+    if (axios.isAxiosError(err) && err.response?.data) {
+      errorMessage = `支付请求失败: ${err.response.data}`
+    }
+    ElMessage.error(errorMessage)
   } finally {
     isPaying.value = false
   }
 }
-// === 结束模拟支付处理 ===
+
+// 定时查询支付状态的函数
+const startPaymentStatusPolling = (orderNo: string) => {
+  // 防止重复启动
+  stopPaymentStatusPolling()
+
+  isCheckingPayment.value = true
+  pollCount.value = 0
+
+  // 打开新窗口存储当前状态
+  localStorage.setItem('polling_order_no', orderNo)
+  localStorage.setItem('polling_start_time', new Date().toISOString())
+
+  // 设置轮询间隔
+  paymentPollingInterval.value = window.setInterval(() => {
+    checkPaymentStatus(orderNo)
+  }, POLL_INTERVAL)
+
+  console.log('开始轮询支付状态，订单号:', orderNo)
+}
+
+// 停止轮询
+const stopPaymentStatusPolling = () => {
+  if (paymentPollingInterval.value) {
+    clearInterval(paymentPollingInterval.value)
+    paymentPollingInterval.value = null
+    isCheckingPayment.value = false
+    localStorage.removeItem('polling_order_no')
+    localStorage.removeItem('polling_start_time')
+    console.log('停止支付状态轮询')
+  }
+}
+
+// 查询支付状态
+const checkPaymentStatus = async (orderNo: string) => {
+  // 增加计数
+  pollCount.value++
+
+  // 超过最大次数后停止
+  if (pollCount.value > MAX_POLL_COUNT) {
+    stopPaymentStatusPolling()
+    console.log('支付状态查询超时，已停止轮询')
+    return
+  }
+
+  try {
+    const response = await queryAlipayPaymentStatus(orderNo)
+    console.log(`第${pollCount.value}次查询支付状态:`, response.data)
+
+    if (response.data && response.data.isPaid) {
+      // 支付成功，停止轮询并刷新订单详情
+      ElMessage.success('支付成功！正在刷新订单状态...')
+      stopPaymentStatusPolling()
+      await fetchOrderDetails()
+    }
+  } catch (err) {
+    console.error('查询支付状态出错:', err)
+    // 发生错误不停止轮询，继续等待下次查询
+  }
+}
+
+// 检测页面加载时是否有未完成的支付查询
+const checkPendingPayment = () => {
+  const pollingOrderNo = localStorage.getItem('polling_order_no')
+  const pollingStartTime = localStorage.getItem('polling_start_time')
+
+  if (pollingOrderNo && pollingStartTime && order.value) {
+    // 检查是否为当前订单的支付
+    if (pollingOrderNo === order.value.orderNo) {
+      // 检查是否超过有效期（30分钟）
+      const startTime = new Date(pollingStartTime).getTime()
+      const currentTime = new Date().getTime()
+      const elapsedMinutes = (currentTime - startTime) / (1000 * 60)
+
+      if (elapsedMinutes < 30) {
+        // 重新启动轮询
+        console.log('检测到未完成的支付，重新启动轮询')
+        startPaymentStatusPolling(pollingOrderNo)
+      } else {
+        // 超过有效期，清除存储
+        localStorage.removeItem('polling_order_no')
+        localStorage.removeItem('polling_start_time')
+      }
+    }
+  }
+}
 
 // 取消订单
 const confirmCancelOrder = () => {
@@ -433,11 +555,14 @@ const showTicket = () => {
 // 组件挂载时获取订单详情
 onMounted(() => {
   fetchOrderDetails()
+  // 检测是否有未完成的支付
+  checkPendingPayment()
 })
 
-// Cleanup countdown timer on component unmount
+// Cleanup countdown timer and payment polling on component unmount
 onUnmounted(() => {
   countdownStopFn.value?.()
+  stopPaymentStatusPolling()
 })
 </script>
 

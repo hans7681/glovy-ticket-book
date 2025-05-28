@@ -5,20 +5,30 @@ import {
   getMovieById,
   fetchAvailableScreenings,
   getFirstScreeningDate,
+  getFavoriteStatus,
   addFavorite,
   removeFavorite,
-  getFavoriteStatus,
-  rateMovie,
   getMyRating,
   getMovieRatings,
-} from '../services/api'
-import type { Movie } from '../types/movie'
-import type { Screening } from '../types/screening'
-import type { Rating } from '../types/rating'
+  rateMovie,
+} from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
+import type { Movie } from '@/types/movie'
+import type { Screening } from '@/types/screening'
+import type { Rating } from '@/types/rating'
+import {
+  ElMessage,
+  ElRate,
+  ElButton,
+  ElDivider,
+  ElDatePicker,
+  ElAlert,
+  ElEmpty,
+  ElSkeleton,
+} from 'element-plus'
+import { StarFilled } from '@element-plus/icons-vue'
+import { getFutureDateOptions, formatDateToYYYYMMDD } from '@/utils/datetime'
 import type { AxiosError } from 'axios'
-import { useAuthStore } from '../stores/auth'
-import { ElMessage, ElRate } from 'element-plus'
-import { Star, StarFilled } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -52,6 +62,32 @@ const isSubmittingRating = ref(false)
 
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 
+const dateOptions = ref<{ label: string; value: string }[]>([])
+
+const initializeDateOptions = () => {
+  dateOptions.value = getFutureDateOptions(7)
+}
+
+const setDefaultDate = async () => {
+  try {
+    const response = await getFirstScreeningDate(movieId.value)
+    if (response.data) {
+      selectedDate.value = response.data
+    } else {
+      selectedDate.value = formatDateToYYYYMMDD(new Date())
+    }
+  } catch (err) {
+    console.warn('无法获取最早场次日期，默认设置为今天:', err)
+    selectedDate.value = formatDateToYYYYMMDD(new Date())
+  }
+}
+
+const disabledDate = (time: Date) => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return time.getTime() < today.getTime()
+}
+
 const formatDate = (dateString: string | undefined) => {
   if (!dateString) return 'N/A'
   try {
@@ -76,13 +112,13 @@ const formatTime = (dateTimeString: string) => {
     })
   } catch (e) {
     console.error('Error formatting time:', e)
-    return dateTimeString // Fallback
+    return dateTimeString
   }
 }
 
 const getImageUrl = (path: string | undefined) => {
   if (!path) {
-    return 'https://via.placeholder.com/300x450.png?text=No+Image' // Larger placeholder
+    return 'https://via.placeholder.com/300x450.png?text=No+Image'
   }
   return path
 }
@@ -95,23 +131,22 @@ async function loadMovieData(id: string) {
     const response = await getMovieById(id)
     movie.value = response.data
 
-    // 电影加载成功后，获取收藏状态和用户评分（如果已登录）
     if (isLoggedIn.value) {
       loadFavoriteStatus(id)
       loadMyRating(id)
     }
-    loadComments(id, 1) // 加载第一页评论
+    loadComments(id, 1)
   } catch (err: unknown) {
-    console.error('Failed to load movie details:', err)
-    if (typeof err === 'object' && err !== null && 'response' in err) {
-      const axiosError = err as AxiosError
-      if (axiosError.response && axiosError.response.status === 404) {
+    console.error('获取电影详情失败:', err)
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosError = err as AxiosError<{ message?: string }>
+      if (axiosError.response?.status === 404) {
         errorMovie.value = '找不到指定的电影。'
       } else {
-        errorMovie.value = '无法加载电影详情，请稍后重试。'
+        errorMovie.value = '加载电影详情失败。'
       }
     } else {
-      errorMovie.value = '无法加载电影详情，发生未知错误。'
+      errorMovie.value = '加载电影详情失败。'
     }
   } finally {
     isLoadingMovie.value = false
@@ -137,9 +172,18 @@ async function loadScreeningsForDate(id: string, date: string) {
     screenings.value = (response.data.records || []).sort(
       (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
     )
-  } catch (err) {
-    console.error(`Failed to load screenings for date ${date}:`, err)
-    errorScreenings.value = '无法加载场次信息，请稍后重试。'
+  } catch (err: unknown) {
+    console.error('获取场次失败:', err)
+    let message = '加载场次信息失败，请稍后再试。'
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosError = err as AxiosError<{ message?: string }>
+      if (axiosError.response?.data?.message) {
+        message = `加载场次失败: ${axiosError.response.data.message}`
+      } else if (axiosError.response?.status) {
+        message = `加载场次失败 (HTTP ${axiosError.response.status})。`
+      }
+    }
+    errorScreenings.value = message
   } finally {
     isLoadingScreenings.value = false
   }
@@ -155,12 +199,11 @@ onMounted(async () => {
   errorMovie.value = null
   try {
     await loadMovieData(movieId.value)
+    initializeDateOptions()
+    await setDefaultDate()
 
     if (movie.value) {
       try {
-        const dateResponse = await getFirstScreeningDate(movieId.value)
-        const earliestDate = dateResponse.data
-        selectedDate.value = earliestDate || new Date().toISOString().split('T')[0]
         await loadScreeningsForDate(movieId.value, selectedDate.value)
       } catch (screeningsOrDateError) {
         console.error(
@@ -205,9 +248,6 @@ watch(
           await loadMovieData(movieId.value)
           if (movie.value) {
             try {
-              const dateResponse = await getFirstScreeningDate(movieId.value)
-              const earliestDate = dateResponse.data
-              selectedDate.value = earliestDate || new Date().toISOString().split('T')[0]
               await loadScreeningsForDate(movieId.value, selectedDate.value)
             } catch (screeningsOrDateError) {
               console.error(
@@ -238,7 +278,6 @@ watch(selectedDate, (newDate, oldDate) => {
   }
 })
 
-// 加载收藏状态
 async function loadFavoriteStatus(id: string) {
   isLoadingFavoriteStatus.value = true
   try {
@@ -246,19 +285,16 @@ async function loadFavoriteStatus(id: string) {
     isFavorited.value = response.data.isFavorited
   } catch (error) {
     console.error('无法加载收藏状态:', error)
-    // 不提示用户错误，按钮保持默认状态即可
   } finally {
     isLoadingFavoriteStatus.value = false
   }
 }
 
-// 加载我的评分
 async function loadMyRating(id: string) {
   isLoadingMyRating.value = true
   try {
     const response = await getMyRating(id)
     myRating.value = response.data
-    // 如果获取到评分，更新对话框的默认值
     if (myRating.value) {
       userScore.value = myRating.value.score
       userComment.value = myRating.value.comment || ''
@@ -276,20 +312,17 @@ async function loadMyRating(id: string) {
       'status' in error.response &&
       error.response.status === 404
     ) {
-      // 404 表示用户未评分，是正常情况
       myRating.value = null
       userScore.value = 0
       userComment.value = ''
     } else {
       console.error('无法加载我的评分:', error)
-      // 可以选择性提示错误
     }
   } finally {
     isLoadingMyRating.value = false
   }
 }
 
-// 加载评论列表
 async function loadComments(id: string, page: number) {
   isLoadingComments.value = true
   try {
@@ -305,14 +338,12 @@ async function loadComments(id: string, page: number) {
   }
 }
 
-// 切换收藏状态
 async function toggleFavorite() {
   if (!isLoggedIn.value) {
     ElMessage.warning('请先登录再收藏电影')
-    // 可以选择跳转到登录页: router.push('/login');
     return
   }
-  if (isTogglingFavorite.value) return // 防止重复点击
+  if (isTogglingFavorite.value) return
 
   isTogglingFavorite.value = true
   try {
@@ -333,13 +364,11 @@ async function toggleFavorite() {
   }
 }
 
-// 打开评分对话框
 function openRatingDialog() {
   if (!isLoggedIn.value) {
     ElMessage.warning('请先登录再进行评分')
     return
   }
-  // 打开对话框前，确保 score 和 comment 是最新的用户评分
   if (myRating.value) {
     userScore.value = myRating.value.score
     userComment.value = myRating.value.comment || ''
@@ -350,9 +379,8 @@ function openRatingDialog() {
   ratingDialogVisible.value = true
 }
 
-// 提交评分
 async function submitRating() {
-  if (!isLoggedIn.value) return // 理论上不会发生，因为按钮已限制
+  if (!isLoggedIn.value) return
   if (userScore.value === 0) {
     ElMessage.warning('请选择评分')
     return
@@ -366,9 +394,8 @@ async function submitRating() {
     })
     ElMessage.success('评分成功')
     ratingDialogVisible.value = false
-    // 提交成功后，刷新电影数据（获取新的平均分）和用户评分
-    loadMovieData(movieId.value) // 重新加载电影会触发 loadMyRating
-    loadComments(movieId.value, 1) // 刷新评论列表到第一页
+    loadMovieData(movieId.value)
+    loadComments(movieId.value, 1)
   } catch (error) {
     console.error('提交评分失败:', error)
     ElMessage.error('提交评分失败，请稍后重试')
@@ -377,9 +404,17 @@ async function submitRating() {
   }
 }
 
-// 评论分页处理
 function handleCommentPageChange(newPage: number) {
   loadComments(movieId.value, newPage)
+}
+
+const handleDateChange = (newDate: string | null) => {
+  console.log('Date picker changed to:', newDate)
+}
+
+const selectDateFromButton = (dateValue: string) => {
+  selectedDate.value = dateValue
+  console.log('Date button clicked:', dateValue)
 }
 </script>
 
@@ -429,12 +464,11 @@ function handleCommentPageChange(newPage: number) {
             </p>
           </div>
 
-          <!-- 新增操作按钮区域 -->
           <div class="action-buttons" v-if="isLoggedIn">
             <el-button
               :type="isFavorited ? 'warning' : 'primary'"
               plain
-              :icon="isFavorited ? StarFilled : Star"
+              :icon="isFavorited ? StarFilled : StarFilled"
               @click="toggleFavorite"
               :loading="isTogglingFavorite || isLoadingFavoriteStatus"
               round
@@ -456,7 +490,6 @@ function handleCommentPageChange(newPage: number) {
               >登录后评分/收藏</el-button
             >
           </div>
-          <!-- 操作按钮区域结束 -->
         </div>
       </div>
 
@@ -473,25 +506,46 @@ function handleCommentPageChange(newPage: number) {
         </video>
       </div>
 
-      <div class="screenings-section">
-        <h2>选择场次</h2>
-        <div class="date-selector">
-          <label for="screening-date">选择日期:</label>
-          <input
-            type="date"
-            id="screening-date"
+      <div class="screenings-section" v-loading="isLoadingScreenings">
+        <h3 class="section-title">选择场次</h3>
+
+        <div class="date-filter-container">
+          <span class="date-label">选择日期：</span>
+          <el-date-picker
             v-model="selectedDate"
-            :disabled="isLoadingMovie || !movie"
+            type="date"
+            placeholder="选择日期"
+            format="YYYY/MM/DD"
+            value-format="YYYY-MM-DD"
+            :disabled-date="disabledDate"
+            @change="handleDateChange"
+            style="margin-right: 10px"
           />
+          <div class="date-quick-select-bar">
+            <el-button
+              v-for="dateOption in dateOptions"
+              :key="dateOption.value"
+              :type="selectedDate === dateOption.value ? 'primary' : ''"
+              text
+              size="small"
+              class="date-button"
+              @click="selectDateFromButton(dateOption.value)"
+            >
+              {{ dateOption.label }}
+            </el-button>
+          </div>
         </div>
 
-        <div v-if="isLoadingScreenings" class="loading-message">正在加载场次信息...</div>
+        <el-alert
+          v-if="errorScreenings"
+          :title="errorScreenings"
+          type="error"
+          show-icon
+          :closable="false"
+          style="margin-bottom: 15px"
+        />
 
-        <div v-else-if="errorScreenings" class="error-message">
-          {{ errorScreenings }}
-        </div>
-
-        <div v-else>
+        <template v-if="screenings.length > 0">
           <ul v-if="screenings.length > 0" class="screenings-list">
             <li v-for="screening in screenings" :key="screening.id" class="screening-item">
               <div class="screening-info">
@@ -511,11 +565,14 @@ function handleCommentPageChange(newPage: number) {
               </div>
             </li>
           </ul>
-          <p v-else class="no-screenings-message">选择的日期暂无场次安排。</p>
-        </div>
+        </template>
+        <el-empty
+          v-else-if="!isLoadingScreenings && !errorScreenings && selectedDate"
+          description="所选日期暂无场次安排"
+        />
+        <el-empty v-else-if="!isLoadingScreenings && !selectedDate" description="请先选择日期" />
       </div>
 
-      <!-- 新增评论区 -->
       <el-divider />
       <div class="comments-section">
         <h2>观众短评</h2>
@@ -581,10 +638,8 @@ function handleCommentPageChange(newPage: number) {
           </template>
         </el-skeleton>
       </div>
-      <!-- 评论区结束 -->
     </div>
 
-    <!-- 新增评分对话框 -->
     <el-dialog
       v-model="ratingDialogVisible"
       :title="myRating ? '修改我的评分' : '写短评'"
@@ -616,7 +671,6 @@ function handleCommentPageChange(newPage: number) {
         </span>
       </template>
     </el-dialog>
-    <!-- 对话框结束 -->
   </div>
 </template>
 
@@ -919,5 +973,160 @@ function handleCommentPageChange(newPage: number) {
 
 .movie-meta-detail strong {
   margin-right: 5px; /* 给 strong 加点右边距 */
+}
+
+.screenings-section {
+  margin-top: 30px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e50914; /* Accent color border */
+  display: inline-block;
+}
+
+.date-filter-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap; /* Prevent wrapping initially */
+  margin-bottom: 25px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  overflow-x: hidden; /* Hide horizontal scrollbar on the main container */
+}
+
+.date-label {
+  font-weight: 500;
+  margin-right: 8px;
+  color: #555;
+  white-space: nowrap; /* Prevent label from wrapping */
+}
+
+.date-quick-select-bar {
+  display: flex;
+  gap: 5px; /* Smaller gap between buttons */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  padding-bottom: 5px; /* Add some space for scrollbar if it appears */
+  /* Hide scrollbar visually - cross-browser */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.date-quick-select-bar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.date-button {
+  padding: 5px 10px; /* Adjust padding for smaller buttons */
+  font-size: 0.85rem;
+  white-space: nowrap; /* Prevent button text wrapping */
+  border: 1px solid transparent; /* Add transparent border for consistent height */
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+  margin: 0; /* Remove default margins */
+}
+
+.date-button.el-button.is-text:hover,
+.date-button.el-button.is-text:focus {
+  /* Custom hover for text buttons */
+  background-color: #ecf5ff;
+  color: #409eff;
+  border-color: #c6e2ff;
+}
+
+/* Style for the primary (active) text button */
+.date-button.el-button--primary.is-text {
+  background-color: #409eff; /* Primary background */
+  color: #fff; /* White text */
+  border-color: #409eff;
+}
+.date-button.el-button--primary.is-text:hover,
+.date-button.el-button--primary.is-text:focus {
+  background-color: #66b1ff; /* Lighter blue on hover/focus */
+  border-color: #66b1ff;
+  color: #fff;
+}
+
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+  .date-filter-container {
+    /* Allow wrapping on smaller screens if needed */
+    /* flex-wrap: wrap; */
+    padding: 8px;
+  }
+  .date-quick-select-bar {
+    margin-top: 10px; /* Add space if date picker wraps */
+    width: 100%; /* Ensure it takes full width when wrapped */
+  }
+}
+
+/* Styles for cinema groups and screenings */
+.cinema-group {
+  margin-bottom: 25px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden; /* Ensures border-radius applies correctly */
+}
+
+.cinema-header {
+  background-color: #f7f7f7;
+  padding: 12px 15px;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.screening-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.screening-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px dashed #eee; /* Dashed separator */
+}
+.screening-item:last-child {
+  border-bottom: none;
+}
+
+.screening-time {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  width: 150px; /* Fixed width for alignment */
+}
+
+.screening-room {
+  color: #666;
+  font-size: 0.9rem;
+  width: 150px; /* Fixed width for alignment */
+  text-align: center;
+}
+
+.screening-price {
+  font-size: 1.2rem;
+  color: #e50914; /* Accent color for price */
+  font-weight: bold;
+  width: 100px; /* Fixed width */
+  text-align: right;
+}
+
+.select-seat-button {
+  margin-left: 20px;
+  width: 100px; /* Fixed width */
 }
 </style>

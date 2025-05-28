@@ -138,6 +138,11 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/announcements',
+      name: 'announcements',
+      component: () => import('@/views/AnnouncementsView.vue'),
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('@/views/UserProfileView.vue'),
@@ -149,6 +154,30 @@ const router = createRouter({
       component: () => import('@/views/SeatSelectionView.vue'),
       props: (route) => ({ screeningId: Number(route.params.screeningId) }),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/payment/success',
+      name: 'PaymentSuccess',
+      component: () => import('@/views/PaymentSuccess.vue'),
+      props: (route) => ({ orderNo: route.query.orderNo }),
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/payment/fail',
+      name: 'PaymentFail',
+      component: () => import('@/views/PaymentFail.vue'),
+      props: (route) => ({ orderNo: route.query.orderNo }),
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/payment-result',
+      name: 'PaymentResult',
+      component: () => import('@/views/PaymentResult.vue'),
+      props: (route) => ({
+        status: route.query.status,
+        orderNo: route.query.orderNo,
+      }),
+      meta: { requiresAuth: false },
     },
   ],
 })

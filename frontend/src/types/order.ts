@@ -77,4 +77,5 @@ export interface OrderVO {
   cancelTime?: string | null // ISO 8601 or null
   createTime: string // ISO 8601
   seatsDescription?: string[] // e.g., ["5排7座", "5排8座"]
+  alipayTradeNo?: string | null // 新增：支付宝交易号
 }

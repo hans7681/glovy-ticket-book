@@ -39,3 +39,61 @@ export function formatDateTime(
     return '' // Return empty string on error
   }
 }
+
+/**
+ * 获取未来 N 天的日期信息列表
+ * @param days 天数 (默认 7)
+ * @returns 包含日期标签和 YYYY-MM-DD 格式值的数组
+ */
+export function getFutureDateOptions(days: number = 7): { label: string; value: string }[] {
+  const options: { label: string; value: string }[] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // 标准化到当天的开始
+
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today)
+    date.setDate(today.getDate() + i)
+
+    const year = date.getFullYear()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    const dayOfWeek = weekdays[date.getDay()]
+
+    const dateValue = `${year}-${month}-${day}`
+    let dateLabel = ''
+
+    if (i === 0) {
+      dateLabel = `今天 (${dayOfWeek})`
+    } else {
+      dateLabel = `${month}/${day} (${dayOfWeek})`
+    }
+
+    options.push({ label: dateLabel, value: dateValue })
+  }
+
+  return options
+}
+
+/**
+ * 将日期字符串格式化为 YYYY-MM-DD
+ * @param date Date 对象或可被 Date 解析的字符串
+ * @returns YYYY-MM-DD 格式的字符串，无效则返回空字符串
+ */
+export function formatDateToYYYYMMDD(date: Date | string | null | undefined): string {
+  if (!date) return ''
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    if (isNaN(d.getTime())) {
+      return ''
+    }
+    const year = d.getFullYear()
+    const month = (d.getMonth() + 1).toString().padStart(2, '0')
+    const day = d.getDate().toString().padStart(2, '0')
+    return `${year}-${month}-${day}`
+  } catch (e) {
+    console.error('Error formatting date to YYYY-MM-DD:', e)
+    return ''
+  }
+}
