@@ -21,7 +21,8 @@
 您可以直接访问下面的链接来体验完整的项目功能。
 
 **➡️ [点击访问在线Demo](https://lkxyrmrjjfue.sealosbja.site)**
-**➡️ [点击访问项目维基][![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hans7681/glovy-ticket-book)**
+
+**➡️ [点击访问项目维基](https://deepwiki.com/hans7681/glovy-ticket-book)**
 
 ---
 
