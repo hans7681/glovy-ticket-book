@@ -1,6 +1,3 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hans7681/glovy-ticket-book)
-
-
 # 🎬 Glovy 光维娱乐 - 全栈电影票预订平台
 
 一个采用前后端分离架构的全功能电影票务预订系统，支持多角色权限管理和完整的票务业务流程。
@@ -191,3 +188,6 @@ npm run dev
 - **部署优化**: 容器化部署到云平台
 
 ---
+
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hans7681/glovy-ticket-book)
